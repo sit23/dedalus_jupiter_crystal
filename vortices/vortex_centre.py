@@ -111,15 +111,7 @@ u['g'][1] = vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( y / (r
 
 pdb.set_trace()
 
-
-# u['g'][0][u] = u_vortex
-# u['g'][1][v] = v_vortex
-
-
-
 # Initial condition: height
-
-
 
 # Initial condition: perturbation
 
