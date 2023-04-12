@@ -14,7 +14,6 @@ To make FFmpeg video:
 
 import numpy as np
 import dedalus.public as d3
-import matplotlib.pyplot as plt
 import logging
 logger = logging.getLogger(__name__)
 import pdb
@@ -59,7 +58,7 @@ ybasis = d3.RealFourier(coords['y'], size=Nz, bounds=(-Lz/2, Lz/2), dealias=deal
 h = dist.Field(name='h', bases=(xbasis,ybasis))
 u = dist.VectorField(coords, name='u', bases=(xbasis,ybasis))
 
-v = dist.Field(name='v', bases=(xbasis, ybasis))
+# v = dist.Field(name='v', bases=(xbasis, ybasis))
 
 # Substitutions
 x, y = dist.local_grids(xbasis, ybasis)
@@ -94,7 +93,7 @@ u['g'][0] = vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( x / (r
 u['g'][1] = vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( y / (r + 1e-16 ) )
 
 
-# pdb.set_trace()
+pdb.set_trace()
 
 
 # Initial condition: height
@@ -109,7 +108,7 @@ solver.solve()
 
 # Initial condition: perturbation
 #---------------------------------
-h['g'] += H*0.01*np.exp(-((x)**2 + y**2)*100.)
+# h['g'] += H*0.01*np.exp(-((x)**2 + y**2)*100.)
 
 
 
@@ -122,11 +121,12 @@ h['g'] += H*0.01*np.exp(-((x)**2 + y**2)*100.)
 problem = d3.IVP([u, h], namespace=locals())
 
 # Rotation
-# problem.add_equation("dt(u) + nu*lap(lap(u)) + g*grad(h)  = - u@grad(u) - 2*Omega*coscolat*zcross(u)")
+problem.add_equation("dt(u) + nu*lap(lap(u)) + g*grad(h)  = - u@grad(u) - 2*Omega*coscolat*zcross(u)")
+problem.add_equation("dt(h) + nu*lap(lap(h)) + H*div(u) = - div(h*u)")
 
 # No rotation
-problem.add_equation("dt(u) + nu*lap(lap(u)) + g*grad(h)  = - u@grad(u)")  
-problem.add_equation("dt(h) + nu*lap(lap(h)) + H*div(u) = - div(h*u)")
+# problem.add_equation("dt(u) + nu*lap(lap(u)) + g*grad(h)  = - u@grad(u)")
+
 
 # Solver
 solver = problem.build_solver(timestepper)
