@@ -12,10 +12,10 @@ A perturbation is then added and the solution is evolved as an IVP.
 
 To run and plot using e.g. 4 processes:
     $ mpiexec -n 4 python3 ./zz_play/spherical.py
-    $ mpiexec -n 4 python3 ./zz_play/plot_sphere.py snapshots/*.h5
+    $ mpiexec -n 4 python3 ./zz_play/plot_sphere.py zz_snapshots/*.h5
 
 To make FFmpeg video:
-    $ ffmpeg -r 10 -i frames/write_%06d.png ./zz_play/vortex.mp4
+    $ ffmpeg -r 10 -i frames/zz_write_%06d.png ./zz_play/sphere.mp4
 """
 
 import numpy as np
@@ -66,7 +66,7 @@ lat = np.pi / 2 - theta + 0*phi                         ## WHY multiply by 0??
 
 umax = 80 * meter / second
 
-pdb.set_trace()
+# pdb.set_trace()
 
 lat0 = np.pi / 7
 lat1 = np.pi / 2 - lat0
@@ -75,7 +75,7 @@ jet = (lat0 <= lat) * (lat <= lat1)
 u_jet = umax / en * np.exp(1 / (lat[jet] - lat0) / (lat[jet] - lat1))
 u['g'][0][jet]  = u_jet
 
-pdb.set_trace()
+# pdb.set_trace()
 
 
 # Initial conditions: balanced height
@@ -86,7 +86,7 @@ problem.add_equation("ave(h) = 0")
 solver = problem.build_solver()
 solver.solve()
 
-pdb.set_trace()
+# pdb.set_trace()
 
 # Initial conditions: perturbation
 lat2 = np.pi / 4
@@ -105,11 +105,11 @@ solver = problem.build_solver(d3.RK222)
 solver.stop_sim_time = stop_sim_time
 
 # Analysis
-snapshots = solver.evaluator.add_file_handler('snapshots', sim_dt=1*hour, max_writes=10)
+snapshots = solver.evaluator.add_file_handler('zz_snapshots', sim_dt=1*hour, max_writes=10)
 snapshots.add_task(h, name='height')
 snapshots.add_task(-d3.div(d3.skew(u)), name='vorticity')
 
-pdb.set_trace()
+# pdb.set_trace()
 
 # Main loop
 try:
