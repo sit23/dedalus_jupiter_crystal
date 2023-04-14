@@ -7,7 +7,7 @@ To run and plot using e.g. 4 processes:
 
 
 To make FFmpeg video:
-    $ ffmpeg -r 10 -i frames/write_%06d.png ./vortices/vortex.mp4
+    $ ffmpeg -r 10 -i frames/write_%06d.png ./vortices/z_vortex.mp4
 
 """
 
@@ -75,6 +75,24 @@ zcross = lambda A: d3.skew(A) # 90deg rotation anticlockwise (positive)
 coscolat = dist.Field(name='coscolat', bases=(xbasis, ybasis))
 coscolat['g'] = np.cos(np.sqrt((x)**2. + (y)**2) / R)                                       # ['g'] is shortcut for full grid
 
+# Problem and Solver
+#--------------------
+
+# Problem
+problem = d3.IVP([u, h], namespace=locals())
+
+# Rotation
+# problem.add_equation("dt(u) + nu*lap(lap(u)) + g*grad(h)  = - u@grad(u) - 2*Omega*coscolat*zcross(u)")
+problem.add_equation("dt(h) + nu*lap(lap(h)) + H*div(u) = - div(h*u)")
+
+# No rotation
+problem.add_equation("dt(u) + nu*lap(lap(u)) + g*grad(h)  = - u@grad(u)")
+
+
+# Solver
+solver = problem.build_solver(timestepper)
+solver.stop_sim_time = stop_sim_time 
+
 #--------------------------------------------------------------------------------------------
 
 # INITIAL CONDITIONS
@@ -103,24 +121,6 @@ h['g'] = H*0.01*np.exp(-((x)**2 + y**2)*100.)
 
 
 #--------------------------------------------------------------------------------------------
-
-# Problem and Solver
-#--------------------
-
-# Problem
-problem = d3.IVP([u, h], namespace=locals())
-
-# Rotation
-# problem.add_equation("dt(u) + nu*lap(lap(u)) + g*grad(h)  = - u@grad(u) - 2*Omega*coscolat*zcross(u)")
-problem.add_equation("dt(h) + nu*lap(lap(h)) + H*div(u) = - div(h*u)")
-
-# No rotation
-problem.add_equation("dt(u) + nu*lap(lap(u)) + g*grad(h)  = - u@grad(u)")
-
-
-# Solver
-solver = problem.build_solver(timestepper)
-solver.stop_sim_time = stop_sim_time 
 
 
 # Snapshots

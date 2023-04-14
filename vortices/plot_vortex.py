@@ -15,6 +15,8 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
+import pdb
+
 from dedalus.extras import plot_tools
 
 
@@ -24,7 +26,7 @@ def main(filename, start, count, output):
     # Plot settings
 
     # tasks = ['vorticity', 'vortex']
-    tasks = 'vorticity'
+    tasks = ['vorticity']
 
     scale = 2                   ## what is this??
     dpi = 200
@@ -48,6 +50,9 @@ def main(filename, start, count, output):
                 axes = mfig.add_axes(i, j, [0, 0, 1, 1])
                 # Call 3D plotting helper, slicing in time
                 dset = file['tasks'][task]
+
+                # pdb.set_trace()
+
                 plot_tools.plot_bot_3d(dset, 0, index, axes=axes, title=task, even_scale=True, visible_axes=False)
             # Add time title
             title = title_func(file['scales/sim_time'][index])
@@ -59,6 +64,8 @@ def main(filename, start, count, output):
             fig.savefig(str(savepath), dpi=dpi)
             fig.clear()
     plt.close(fig)
+
+
 
 
 if __name__ == "__main__":
