@@ -12,7 +12,7 @@ A perturbation is then added and the solution is evolved as an IVP.
 
 To run and plot using e.g. 4 processes:
     $ mpiexec -n 4 python3 ./zz_play/spherical.py
-    $ mpiexec -n 4 python3 ./zz_play/plot_sphere.py zz_snapshots/*.h5
+    $ mpiexec -n 4 python3 ./zz_play/plot_sphere.py ./zz_play/spherical_snapshots/*.h5
 
 To make FFmpeg video:
     $ ffmpeg -r 10 -i frames/zz_write_%06d.png ./zz_play/vid_sphere.mp4
@@ -105,7 +105,7 @@ solver = problem.build_solver(d3.RK222)
 solver.stop_sim_time = stop_sim_time
 
 # Analysis
-snapshots = solver.evaluator.add_file_handler('zz_snapshots', sim_dt=1*hour, max_writes=10)
+snapshots = solver.evaluator.add_file_handler('./zz_play/spherical_snapshots', sim_dt=1*hour, max_writes=10)
 snapshots.add_task(h, name='height')
 snapshots.add_task(-d3.div(d3.skew(u)), name='vorticity')
 
