@@ -15,6 +15,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+import pdb
 
 
 def build_s2_coord_vertices(phi, theta):
@@ -34,7 +35,7 @@ def main(filename, start, count, output):
     cmap = plt.cm.RdBu_r
     dpi = 100
     figsize = (8, 8)
-    savename_func = lambda write: 'write_{:06}.png'.format(write)
+    savename_func = lambda write: 'zwrite_{:06}.png'.format(write)
     # Create figure
     fig = plt.figure(figsize=figsize)
     ax = fig.add_axes([0, 0, 1, 1], projection='3d')
@@ -79,6 +80,8 @@ if __name__ == "__main__":
     from dedalus.tools.parallel import Sync
 
     args = docopt(__doc__)
+
+    pdb.set_trace()
 
     output_path = pathlib.Path(args['--output']).absolute()
     # Create output directory if needed

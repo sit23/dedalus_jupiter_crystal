@@ -15,7 +15,7 @@ To run and plot using e.g. 4 processes:
     $ mpiexec -n 4 python3 ./zz_play/plot_sphere.py snapshots/*.h5
 
 To make FFmpeg video:
-    $ ffmpeg -r 10 -i frames/write_%06d.png ./zz_play/vortex.mp4
+    $ ffmpeg -r 10 -i frames/zwrite_%06d.png ./zz_play/vortex.mp4
 """
 
 import numpy as np
