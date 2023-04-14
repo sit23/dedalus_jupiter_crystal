@@ -95,9 +95,6 @@ u['g'][1] = vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( y / (r
 
 pdb.set_trace()
 
-<<<<<<< HEAD
-# Initial condition: height
-=======
 
 # Initial condition: height
 #---------------------------
@@ -108,7 +105,6 @@ pdb.set_trace()
 # solver = problem.build_solver()
 # solver.solve()
 
->>>>>>> new-features
 
 # Initial condition: perturbation
 #---------------------------------

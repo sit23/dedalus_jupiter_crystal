@@ -17,7 +17,7 @@ To run and plot using e.g. 4 processes: ******REMEMBER TO SAVE******
     $ mpiexec -n 4 python3 ded_to_xarray.py
 
 To make FFmpeg video:
-    ffmpeg -r 10 -i frames/write_%06d.png ./zz_play/sw_cart_vortex.mp4
+    ffmpeg -r 10 -i frames/write_%06d.png ./zz_play/vid_sw_cart_vortex.mp4
 """
 
 import numpy as np
