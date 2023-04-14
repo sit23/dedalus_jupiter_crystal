@@ -7,6 +7,9 @@ Usage:
 Options:
     --output=<dir>  Output directory [default: ./frames]
 
+
+python3 ./zz_play/plot_sphere.py ./zz_play/spherical_snapshots/*.h5 --output ./spherical_frames
+
 """
 
 import h5py
@@ -42,6 +45,9 @@ def main(filename, start, count, output):
     # Plot writes
     with h5py.File(filename, mode='r') as file:
         dset = file['tasks'][task]
+
+        # pdb.set_trace()
+
         phi = dset.dims[1][0][:].ravel()
         theta = dset.dims[2][0][:].ravel()
         phi_vert, theta_vert = build_s2_coord_vertices(phi, theta)

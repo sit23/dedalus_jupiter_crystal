@@ -109,6 +109,8 @@ snapshots = solver.evaluator.add_file_handler('./zz_play/spherical_snapshots', s
 snapshots.add_task(h, name='height')
 snapshots.add_task(-d3.div(d3.skew(u)), name='vorticity')
 
+snapshots.add_task(u, name='u')
+
 # pdb.set_trace()
 
 # Main loop

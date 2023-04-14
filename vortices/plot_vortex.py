@@ -14,6 +14,7 @@ import numpy as np
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+import pdb
 
 from dedalus.extras import plot_tools
 
@@ -22,7 +23,7 @@ def main(filename, start, count, output):
     """Save plot of specified tasks for given range of analysis writes."""
 
     # Plot settings
-    tasks = 'vorticity'
+    tasks = ['u']
     scale = 2                   ## what is this??
     dpi = 200
     title_func = lambda sim_time: 't = {:.3f}'.format(sim_time)
@@ -45,7 +46,13 @@ def main(filename, start, count, output):
                 axes = mfig.add_axes(i, j, [0, 0, 1, 1])
                 # Call 3D plotting helper, slicing in time
                 dset = file['tasks'][task]
-                plot_tools.plot_bot_3d(dset, 0, index, axes=axes, title=task, even_scale=True, visible_axes=False)
+
+                u_dset = dset[:,0,...]
+                v_dset = dset[:][1]
+
+                pdb.set_trace()
+
+                plot_tools.plot_bot_3d(u_dset, 0, index, axes=axes, title=task, even_scale=True, visible_axes=False)
             # Add time title
             title = title_func(file['scales/sim_time'][index])
             title_height = 1 - 0.5 * mfig.margin.top / mfig.fig.y

@@ -143,6 +143,8 @@ snapshots = solver.evaluator.add_file_handler('snapshots', sim_dt=0.1, max_write
 snapshots.add_task(h, name='height')
 snapshots.add_task(-d3.div(d3.skew(u)), name='vorticity') 
 
+snapshots.add_task(d3.dot(u,ex), name='u')
+snapshots.add_task(d3.dot(u,ey), name='v')
 
 #--------------------------------------------------------------------------------------------
 
@@ -154,7 +156,7 @@ CFL.add_velocity(u)
 
 # Flow properties
 flow = d3.GlobalFlowProperty(solver, cadence=10)
-flow.add_property(d3.dot(u,ey)**2, name='w2')
+flow.add_property(d3.dot(u,ey)**2, name='w2') # note
 
 
 # Main loop
