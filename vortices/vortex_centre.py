@@ -14,7 +14,6 @@ To make FFmpeg video:
 
 import numpy as np
 import dedalus.public as d3
-import matplotlib.pyplot as plt
 import logging
 logger = logging.getLogger(__name__)
 import pdb
@@ -59,7 +58,7 @@ ybasis = d3.RealFourier(coords['y'], size=Nz, bounds=(-Lz/2, Lz/2), dealias=deal
 h = dist.Field(name='h', bases=(xbasis,ybasis))
 u = dist.VectorField(coords, name='u', bases=(xbasis,ybasis))
 
-v = dist.Field(name='v', bases=(xbasis, ybasis))
+# v = dist.Field(name='v', bases=(xbasis, ybasis))
 
 # Substitutions
 x, y = dist.local_grids(xbasis, ybasis)
@@ -76,25 +75,9 @@ zcross = lambda A: d3.skew(A) # 90deg rotation anticlockwise (positive)
 coscolat = dist.Field(name='coscolat', bases=(xbasis, ybasis))
 coscolat['g'] = np.cos(np.sqrt((x)**2. + (y)**2) / R)                                       # ['g'] is shortcut for full grid
 
-
-# Problem
-problem = d3.IVP([u, h], namespace=locals())
-
-# Rotation
-# problem.add_equation("dt(u) + nu*lap(lap(u)) + g*grad(h)  = - u@grad(u) - 2*Omega*coscolat*zcross(u)")
-
-# No rotation
-problem.add_equation("dt(u) + nu*lap(lap(u)) + g*grad(h)  = - u@grad(u)")  
-problem.add_equation("dt(h) + nu*lap(lap(h)) + H*div(u) = - div(h*u)")
-
-# Solver
-solver = problem.build_solver(timestepper)
-solver.stop_sim_time = stop_sim_time 
-
 #--------------------------------------------------------------------------------------------
 
-# Initial Conditions
-#--------------------
+# INITIAL CONDITIONS
 
 # Parameters
 b = 1                                       # steepness parameter             
@@ -103,6 +86,7 @@ vm = 80 * meter / second                    # maximum velocity of vortex
 r = np.sqrt( x**2 + y**2 )                  # radius
 
 # Initial condition: vortex
+#---------------------------
 
 # Overide u,v components in velocity field
 u['g'][0] = vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( x / (r + 1e-16 ) )
@@ -111,13 +95,47 @@ u['g'][1] = vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( y / (r
 
 pdb.set_trace()
 
+<<<<<<< HEAD
 # Initial condition: height
+=======
+
+# Initial condition: height
+#---------------------------
+# c = dist.Field(name='c')
+# problem = d3.LBVP([h, c], namespace=locals())
+# problem.add_equation("g*lap(h) + c = - div(u@grad(u) + 2*Omega*zcross(u))")
+# problem.add_equation("ave(h) = 0")
+# solver = problem.build_solver()
+# solver.solve()
+
+>>>>>>> new-features
 
 # Initial condition: perturbation
+#---------------------------------
+h['g'] = H*0.01*np.exp(-((x)**2 + y**2)*100.)
 
 
 
 #--------------------------------------------------------------------------------------------
+
+# Problem and Solver
+#--------------------
+
+# Problem
+problem = d3.IVP([u, h], namespace=locals())
+
+# Rotation
+problem.add_equation("dt(u) + nu*lap(lap(u)) + g*grad(h)  = - u@grad(u) - 2*Omega*coscolat*zcross(u)")
+problem.add_equation("dt(h) + nu*lap(lap(h)) + H*div(u) = - div(h*u)")
+
+# No rotation
+# problem.add_equation("dt(u) + nu*lap(lap(u)) + g*grad(h)  = - u@grad(u)")
+
+
+# Solver
+solver = problem.build_solver(timestepper)
+solver.stop_sim_time = stop_sim_time 
+
 
 # Snapshots
 #-----------
@@ -127,7 +145,6 @@ snapshots = solver.evaluator.add_file_handler('snapshots', sim_dt=0.1, max_write
 
 # add velocity field
 snapshots.add_task(h, name='height')
-snapshots.add_task(v, name='vortex') 
 snapshots.add_task(-d3.div(d3.skew(u)), name='vorticity') 
 
 

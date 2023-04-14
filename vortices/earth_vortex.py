@@ -25,16 +25,15 @@ import dedalus.public as d3
 import logging
 logger = logging.getLogger(__name__)
 import pdb
-import matplotlib.pyplot as plt
 
 # Simulation units
-meter = 1 / 6.37122e6 ## Radius of Earth
+meter = 1 / 6.37122e6
 hour = 1
 second = hour / 3600
 
 # Numerical Parameters
-Lx, Lz = 1, 1                       # Domain size
-Nx, Nz = 128, 128                   # Number of grid points
+Lx, Lz = 1, 1                       
+Nx, Nz = 128, 128                   
 dealias = 3/2
 stop_sim_time = 20
 timestepper = d3.RK222
@@ -55,11 +54,13 @@ xbasis = d3.RealFourier(coords['x'], size=Nx, bounds=(-Lx/2, Lx/2), dealias=deal
 ybasis = d3.RealFourier(coords['y'], size=Nz, bounds=(-Lz/2, Lz/2), dealias=dealias)
 
 
-# Fields both functions of x,y
-# vary in x,y dimensions (bases)
-h = dist.Field(name='h', bases=(xbasis,ybasis))
+# Fields
 u = dist.VectorField(coords, name='u', bases=(xbasis,ybasis))
+h = dist.Field(name='h', bases=(xbasis,ybasis))
 
+# All consistent up to this point
+
+#-------------------------------------------------------------------------------------------------------
 
 # Substitutions
 
@@ -68,32 +69,54 @@ ex, ey = coords.unit_vector_fields(dist)
 
 zcross = lambda A: d3.skew(A) # 90deg rotation anticlockwise (positive)
 
+pdb.set_trace()
+
+
+# INITIAL CONDITIONS
+
+# Initial conditions: balanced height
+c = dist.Field(name='c')
+problem = d3.LBVP([h, c], namespace=locals())
+problem.add_equation("g*lap(h) + c = - div(u@grad(u) + 2*Omega*zcross(u))")
+## g == g
+## h == h
+## c == c
+
+## u HAS to be the issue.
+### shape: (2, 128, 128) ==
+
+
+problem.add_equation("ave(h) = 0")                      ## ISSUE CAUSER
+
+
+solver = problem.build_solver()
+solver.solve()
+
+pdb.set_trace()
+
+#Create gaussian disturbance in height at the centre of the domain
+hpert = H*0.01
+h['g'] += hpert * np.exp(-((x)**2 + y**2)*100.)
+
+# Make corrections for taking H out of above
+hh = H + h
+
+
+#-------------------------------------------------------------------------------------------------------
+
+
 coscolat = dist.Field(name='coscolat', bases=(xbasis, ybasis))
-coscolat['g'] = np.cos(np.sqrt((x)**2. + (y)**2) / R)                                       # ['g'] is shortcut for full grid
+coscolat['g'] = np.cos(np.sqrt((x)**2. + (y)**2) / R)                                       
 
 
 # Problem
-## LHS must be first order in temporal derivatives and linear
-## RHS can be nonlinear and time-dependent terms but no temporal derivatives
 problem = d3.IVP([u, h], namespace=locals())
 problem.add_equation("dt(u) + nu*lap(lap(u)) + g*grad(h)  = - u@grad(u) - 2*Omega*coscolat*zcross(u)")
-# problem.add_equation("dt(u) + nu*lap(lap(u)) + g*grad(h)  = - u@grad(u)") #               # Simulate no rotation
 problem.add_equation("dt(h) + nu*lap(lap(h)) + H*div(u) = - div(h*u)")
 
 # Solver
 solver = problem.build_solver(timestepper)
 solver.stop_sim_time = stop_sim_time 
-
-
-# Initial conditions
-
-#Create gaussian disturbance in height at the centre of the domain
-h['g'] = H*0.01*np.exp(-((x)**2 + y**2)*100.)
-
-# Make corrections for taking H out of above
-hh = H + h
-
-# pdb.set_trace()
 
 
 # Analysis
@@ -102,14 +125,14 @@ snapshots = solver.evaluator.add_file_handler('snapshots', sim_dt=0.1, max_write
 
 #Add full fields - vorticity, height, PV and planetary vorticity
 snapshots.add_task(hh, name='height') 
-snapshots.add_task(-d3.div(d3.skew(u)), name='vorticity')                                           # Why negative? - write out skew and derive
+snapshots.add_task(-d3.div(d3.skew(u)), name='vorticity')                                           
 snapshots.add_task((2*Omega*coscolat-d3.div(d3.skew(u)))/hh, name='PV')
 snapshots.add_task((2*Omega*coscolat), name='plvort')
 
 
 #Add perturbation fields - i.e. full field minus initial values
-snapshots.add_task(h, name='pheight')                                                               # perturbation height
-snapshots.add_task((2*Omega*coscolat-d3.div(d3.skew(u)))/hh - (2*Omega*coscolat)/H, name='pPV')     # perturbation PV - hh or h?
+snapshots.add_task(h, name='pheight')                                                               
+snapshots.add_task((2*Omega*coscolat-d3.div(d3.skew(u)))/hh - (2*Omega*coscolat)/H, name='pPV')     
 
 
 # CFL

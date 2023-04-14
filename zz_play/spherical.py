@@ -12,10 +12,14 @@ A perturbation is then added and the solution is evolved as an IVP.
 
 To run and plot using e.g. 4 processes:
     $ mpiexec -n 4 python3 ./zz_play/spherical.py
-    $ mpiexec -n 4 python3 ./zz_play/plot_sphere.py snapshots/*.h5
+    $ mpiexec -n 4 python3 ./zz_play/plot_sphere.py zz_snapshots/*.h5
 
 To make FFmpeg video:
+<<<<<<< HEAD
     $ ffmpeg -r 10 -i frames/zwrite_%06d.png ./zz_play/vortex.mp4
+=======
+    $ ffmpeg -r 10 -i frames/zz_write_%06d.png ./zz_play/sphere.mp4
+>>>>>>> new-features
 """
 
 import numpy as np
@@ -31,34 +35,43 @@ hour = 1
 second = hour / 3600
 
 # Parameters
-Nphi = 256
+Nphi = 128
 Ntheta = 128
 dealias = 3/2
+timestep = 600 * second
+stop_sim_time = 360 * hour
+dtype = np.float64
+
 R = 6.37122e6 * meter
 Omega = 7.292e-5 / second
 nu = 1e5 * meter**2 / second / 32**2 # Hyperdiffusion matched at ell=32
 g = 9.80616 * meter / second**2
 H = 1e4 * meter
-timestep = 600 * second
-stop_sim_time = 360 * hour
-dtype = np.float64
 
 # Bases
 coords = d3.S2Coordinates('phi', 'theta')
 dist = d3.Distributor(coords, dtype=dtype)
 basis = d3.SphereBasis(coords, (Nphi, Ntheta), radius=R, dealias=dealias, dtype=dtype)
 
+
 # Fields
 u = dist.VectorField(coords, name='u', bases=basis)
 h = dist.Field(name='h', bases=basis)
 
+#-------------------------------------------------------------------------------------------------------
+
 # Substitutions
+phi, theta = dist.local_grids(basis)
+
 zcross = lambda A: d3.MulCosine(d3.skew(A))
 
 # Initial conditions: zonal jet
-phi, theta = dist.local_grids(basis)
-lat = np.pi / 2 - theta + 0*phi
+lat = np.pi / 2 - theta + 0*phi                         ## WHY multiply by 0??
+
 umax = 80 * meter / second
+
+# pdb.set_trace()
+
 lat0 = np.pi / 7
 lat1 = np.pi / 2 - lat0
 en = np.exp(-4 / (lat1 - lat0)**2)
@@ -66,13 +79,7 @@ jet = (lat0 <= lat) * (lat <= lat1)
 u_jet = umax / en * np.exp(1 / (lat[jet] - lat0) / (lat[jet] - lat1))
 u['g'][0][jet]  = u_jet
 
-
 # pdb.set_trace()
-
-
-
-
-
 
 
 # Initial conditions: balanced height
@@ -82,6 +89,8 @@ problem.add_equation("g*lap(h) + c = - div(u@grad(u) + 2*Omega*zcross(u))")
 problem.add_equation("ave(h) = 0")
 solver = problem.build_solver()
 solver.solve()
+
+# pdb.set_trace()
 
 # Initial conditions: perturbation
 lat2 = np.pi / 4
@@ -100,9 +109,11 @@ solver = problem.build_solver(d3.RK222)
 solver.stop_sim_time = stop_sim_time
 
 # Analysis
-snapshots = solver.evaluator.add_file_handler('snapshots', sim_dt=1*hour, max_writes=10)
+snapshots = solver.evaluator.add_file_handler('zz_snapshots', sim_dt=1*hour, max_writes=10)
 snapshots.add_task(h, name='height')
 snapshots.add_task(-d3.div(d3.skew(u)), name='vorticity')
+
+# pdb.set_trace()
 
 # Main loop
 try:

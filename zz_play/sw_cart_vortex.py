@@ -12,12 +12,12 @@ Plans:
 * Should shrink domain so that it's the size of their domain - our's is almost certainly too big at this stage.
 
 To run and plot using e.g. 4 processes: ******REMEMBER TO SAVE******
-    $ mpiexec -n 4 python3 sw_cart.py
-    $ mpiexec -n 4 python3 plot_snapshots.py snapshots/*.h5
+    $ mpiexec -n 4 python3 ./zz_play/sw_cart_vortex.py
+    $ mpiexec -n 4 python3 plot_snapshots.py ./zz_play/vortex_snapshots/*.h5
     $ mpiexec -n 4 python3 ded_to_xarray.py
 
 To make FFmpeg video:
-    ffmpeg -r 10 -i frames/write_%06d.png vortex.mp4
+    ffmpeg -r 10 -i frames/write_%06d.png ./zz_play/sw_cart_vortex.mp4
 """
 
 import numpy as np
@@ -84,8 +84,24 @@ problem.add_equation("dt(h) + nu*lap(lap(h)) + H*div(u) = - div(h*u)")
 solver = problem.build_solver(timestepper)
 solver.stop_sim_time = stop_sim_time 
 
+#-------------------------------------------------------------------------------------------------------
 
-# Initial conditions
+
+# INITIAL CONDITIONS
+
+# Parameters
+b = 1                                       # steepness parameter             
+rm = 1e6 * meter                            # Radius of vortex (km)
+vm = 80 * meter / second                    # maximum velocity of vortex
+r = np.sqrt( x**2 + y**2 )                  # radius
+
+# Initial condition: vortex
+#---------------------------
+
+# Overide u,v components in velocity field
+u['g'][0] = vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( x / (r + 1e-16 ) )
+u['g'][1] = vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( y / (r + 1e-16 ) )
+
 
 #Create gaussian disturbance in height at the centre of the domain
 h['g'] = H*0.01*np.exp(-((x)**2 + y**2)*100.)
@@ -95,9 +111,11 @@ hh = H + h
 
 # pdb.set_trace()
 
+#-------------------------------------------------------------------------------------------------------
+
 
 # Analysis
-snapshots = solver.evaluator.add_file_handler('snapshots', sim_dt=0.1, max_writes=10)
+snapshots = solver.evaluator.add_file_handler('./zz_play/vortex_snapshots', sim_dt=0.1, max_writes=10)
 
 
 #Add full fields - vorticity, height, PV and planetary vorticity

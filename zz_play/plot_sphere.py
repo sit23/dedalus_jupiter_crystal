@@ -35,7 +35,11 @@ def main(filename, start, count, output):
     cmap = plt.cm.RdBu_r
     dpi = 100
     figsize = (8, 8)
+<<<<<<< HEAD
     savename_func = lambda write: 'zwrite_{:06}.png'.format(write)
+=======
+    savename_func = lambda write: 'zz_write_{:06}.png'.format(write)
+>>>>>>> new-features
     # Create figure
     fig = plt.figure(figsize=figsize)
     ax = fig.add_axes([0, 0, 1, 1], projection='3d')
@@ -90,4 +94,3 @@ if __name__ == "__main__":
             if not output_path.exists():
                 output_path.mkdir()
     post.visit_writes(args['<files>'], main, output=output_path)
-

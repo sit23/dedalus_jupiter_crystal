@@ -1,2 +1,8 @@
 *.h5
+<<<<<<< HEAD
 *.png
+=======
+*.mp4
+*.png
+*.pdf
+>>>>>>> new-features
