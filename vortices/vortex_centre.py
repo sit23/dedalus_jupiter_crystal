@@ -109,7 +109,7 @@ u['g'][0] = vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( x / (r
 u['g'][1] = vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( y / (r + 1e-16 ) )
 
 
-# pdb.set_trace()
+pdb.set_trace()
 
 # Initial condition: height
 
