@@ -22,7 +22,10 @@ def main(filename, start, count, output):
     """Save plot of specified tasks for given range of analysis writes."""
 
     # Plot settings
+
+    # tasks = ['vorticity', 'vortex']
     tasks = 'vorticity'
+
     scale = 2                   ## what is this??
     dpi = 200
     title_func = lambda sim_time: 't = {:.3f}'.format(sim_time)

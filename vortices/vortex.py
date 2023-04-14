@@ -1,7 +1,7 @@
 """
 
 To run and plot using e.g. 4 processes:
-    $ mpiexec -n 4 python3 ./vortices/vortex_centre.py
+    $ mpiexec -n 4 python3 ./vortices/vortex.py
     $ mpiexec -n 4 python3 ./vortices/plot_vortex.py snapshots/*.h5
     $ mpiexec -n 4 python3 ded_to_xarray.py
 
@@ -93,17 +93,7 @@ u['g'][0] = vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( x / (r
 u['g'][1] = vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( y / (r + 1e-16 ) )
 
 
-pdb.set_trace()
-
-
-# Initial condition: height
-#---------------------------
-# c = dist.Field(name='c')
-# problem = d3.LBVP([h, c], namespace=locals())
-# problem.add_equation("g*lap(h) + c = - div(u@grad(u) + 2*Omega*zcross(u))")
-# problem.add_equation("ave(h) = 0")
-# solver = problem.build_solver()
-# solver.solve()
+# pdb.set_trace()
 
 
 # Initial condition: perturbation
@@ -121,11 +111,11 @@ h['g'] = H*0.01*np.exp(-((x)**2 + y**2)*100.)
 problem = d3.IVP([u, h], namespace=locals())
 
 # Rotation
-problem.add_equation("dt(u) + nu*lap(lap(u)) + g*grad(h)  = - u@grad(u) - 2*Omega*coscolat*zcross(u)")
+# problem.add_equation("dt(u) + nu*lap(lap(u)) + g*grad(h)  = - u@grad(u) - 2*Omega*coscolat*zcross(u)")
 problem.add_equation("dt(h) + nu*lap(lap(h)) + H*div(u) = - div(h*u)")
 
 # No rotation
-# problem.add_equation("dt(u) + nu*lap(lap(u)) + g*grad(h)  = - u@grad(u)")
+problem.add_equation("dt(u) + nu*lap(lap(u)) + g*grad(h)  = - u@grad(u)")
 
 
 # Solver
@@ -142,6 +132,7 @@ snapshots = solver.evaluator.add_file_handler('snapshots', sim_dt=0.1, max_write
 # add velocity field
 snapshots.add_task(h, name='height')
 snapshots.add_task(-d3.div(d3.skew(u)), name='vorticity') 
+# snapshots.add_task(u, name='vortex')
 
 
 #--------------------------------------------------------------------------------------------

@@ -70,12 +70,15 @@ umax = 80 * meter / second
 
 lat0 = np.pi / 7
 lat1 = np.pi / 2 - lat0
+
 en = np.exp(-4 / (lat1 - lat0)**2)
+
+
 jet = (lat0 <= lat) * (lat <= lat1)
 u_jet = umax / en * np.exp(1 / (lat[jet] - lat0) / (lat[jet] - lat1))
 u['g'][0][jet]  = u_jet
 
-# pdb.set_trace()
+pdb.set_trace()
 
 
 # Initial conditions: balanced height
