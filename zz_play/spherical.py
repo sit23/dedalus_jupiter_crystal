@@ -66,6 +66,8 @@ lat = np.pi / 2 - theta + 0*phi                         ## WHY multiply by 0??
 
 umax = 80 * meter / second
 
+pdb.set_trace()
+
 lat0 = np.pi / 7
 lat1 = np.pi / 2 - lat0
 en = np.exp(-4 / (lat1 - lat0)**2)

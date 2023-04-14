@@ -25,6 +25,7 @@ import dedalus.public as d3
 import logging
 logger = logging.getLogger(__name__)
 import pdb
+import matplotlib.pyplot as plt
 
 # Simulation units
 meter = 1 / 6.37122e6 ## Radius of Earth
@@ -92,7 +93,7 @@ h['g'] = H*0.01*np.exp(-((x)**2 + y**2)*100.)
 # Make corrections for taking H out of above
 hh = H + h
 
-pdb.set_trace()
+# pdb.set_trace()
 
 
 # Analysis
