@@ -7,6 +7,9 @@ Usage:
 Options:
     --output=<dir>  Output directory [default: ./frames]
 
+
+mpiexec -n 4 python3 ./vortices/plot_vortex.py snapshots/*.h5 --output ./vortices/vortex_frames
+
 """
 
 import h5py
@@ -23,7 +26,7 @@ def main(filename, start, count, output):
     """Save plot of specified tasks for given range of analysis writes."""
 
     # Plot settings
-    tasks = ['u']
+    tasks = ['vorticity']
     scale = 2                   ## what is this??
     dpi = 200
     title_func = lambda sim_time: 't = {:.3f}'.format(sim_time)
@@ -47,12 +50,9 @@ def main(filename, start, count, output):
                 # Call 3D plotting helper, slicing in time
                 dset = file['tasks'][task]
 
-                u_dset = dset[:,0,...]
-                v_dset = dset[:][1]
+                plot_tools.plot_bot_3d(dset, 0, index, axes=axes, title=task, even_scale=True, visible_axes=False)
 
-                pdb.set_trace()
-
-                plot_tools.plot_bot_3d(u_dset, 0, index, axes=axes, title=task, even_scale=True, visible_axes=False)
+                
             # Add time title
             title = title_func(file['scales/sim_time'][index])
             title_height = 1 - 0.5 * mfig.margin.top / mfig.fig.y
