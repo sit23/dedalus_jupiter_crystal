@@ -46,13 +46,15 @@ def main(filename, start, count, output):
     with h5py.File(filename, mode='r') as file:
         for index in range(start, start+count):
             for n, task in enumerate(tasks):
+                
                 # Build subfigure axes
                 i, j = divmod(n, ncols)
                 axes = mfig.add_axes(i, j, [0, 0, 1, 1])
+
                 # Call 3D plotting helper, slicing in time
                 dset = file['tasks'][task]
 
-                # pdb.set_trace()
+                pdb.set_trace()
 
                 plot_tools.plot_bot_3d(dset, 0, index, axes=axes, title=task, even_scale=True, visible_axes=False)
 
