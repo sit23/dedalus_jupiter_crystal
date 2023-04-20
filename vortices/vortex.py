@@ -112,7 +112,6 @@ u['g'][1] = vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( y / (r
 
 
 # pdb.set_trace()
-<<<<<<< HEAD:vortices/vortex_centre.py
 
 
 # Initial condition: height
@@ -123,8 +122,6 @@ u['g'][1] = vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( y / (r
 # problem.add_equation("ave(h) = 0")
 # solver = problem.build_solver()
 # solver.solve()
-=======
->>>>>>> vortices:vortices/vortex.py
 
 
 # Initial condition: perturbation
