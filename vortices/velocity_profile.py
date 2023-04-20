@@ -22,7 +22,7 @@ vm = 80
 #----------------------------------------------------------------------------------------------
 
 # range of radius
-r = np.arange(0, 10*rm)
+r = np.arange(-0*rm, 10*rm)
 
 # Velocity profile
 v1 = vm * ( r / rm ) * np.exp( (1/b1) * ( 1 - (r/rm)**b1 ) )

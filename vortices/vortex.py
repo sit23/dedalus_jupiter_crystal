@@ -82,11 +82,11 @@ coscolat['g'] = np.cos(np.sqrt((x)**2. + (y)**2) / R)                           
 problem = d3.IVP([u, h], namespace=locals())
 
 # Rotation
-# problem.add_equation("dt(u) + nu*lap(lap(u)) + g*grad(h)  = - u@grad(u) - 2*Omega*coscolat*zcross(u)")
-problem.add_equation("dt(h) + nu*lap(lap(h)) + H*div(u) = - div(h*u)")
-
+problem.add_equation("dt(u) + nu*lap(lap(u)) + g*grad(h)  = - u@grad(u) - 2*Omega*coscolat*zcross(u)")
 # No rotation
-problem.add_equation("dt(u) + nu*lap(lap(u)) + g*grad(h)  = - u@grad(u)")
+# problem.add_equation("dt(u) + nu*lap(lap(u)) + g*grad(h)  = - u@grad(u)")
+
+problem.add_equation("dt(h) + nu*lap(lap(h)) + H*div(u) = - div(h*u)")
 
 
 # Solver
@@ -118,8 +118,13 @@ u['g'][1] = vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( y / (r
 #---------------------------
 # c = dist.Field(name='c')
 # problem = d3.LBVP([h, c], namespace=locals())
-# problem.add_equation("g*lap(h) + c = - div(u@grad(u) + 2*Omega*zcross(u))")
+# problem.add_equation("g*lap(h) + c = - div(u@grad(u) + 2*Omega*coscolat*zcross(u))")
+
 # problem.add_equation("ave(h) = 0")
+# h_ave = d3.Average(h, ('x', 'y'))
+# print('f average:', h_ave.evaluate()['g'])
+# pdb.set_trace()
+
 # solver = problem.build_solver()
 # solver.solve()
 
@@ -141,8 +146,7 @@ snapshots = solver.evaluator.add_file_handler('snapshots', sim_dt=0.1, max_write
 
 # add velocity field
 snapshots.add_task(h, name='height')
-snapshots.add_task(-d3.div(d3.skew(u)), name='vorticity') 
-# snapshots.add_task(u, name='vortex')
+snapshots.add_task(-d3.div(d3.skew(u)), name='vorticity')
 
 snapshots.add_task(d3.dot(u,ex), name='u')
 snapshots.add_task(d3.dot(u,ey), name='v')
