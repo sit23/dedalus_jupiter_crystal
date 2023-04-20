@@ -7,7 +7,7 @@ To run and plot using e.g. 4 processes:
 
 
 To make FFmpeg video:
-    $ ffmpeg -r 10 -i frames/write_%06d.png ./vortices/z_vortex.mp4
+    $ ffmpeg -r 10 -i ./vortices/vortex_frames/write_%06d.png ./vortices/z_vortex.mp4
 
 """
 
