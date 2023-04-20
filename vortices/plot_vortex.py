@@ -19,6 +19,8 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import pdb
 
+import pdb
+
 from dedalus.extras import plot_tools
 
 
@@ -63,6 +65,8 @@ def main(filename, start, count, output):
             fig.savefig(str(savepath), dpi=dpi)
             fig.clear()
     plt.close(fig)
+
+
 
 
 if __name__ == "__main__":

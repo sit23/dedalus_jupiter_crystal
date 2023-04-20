@@ -1,13 +1,13 @@
 """
 
 To run and plot using e.g. 4 processes:
-    $ mpiexec -n 4 python3 ./vortices/vortex_centre.py
+    $ mpiexec -n 4 python3 ./vortices/vortex.py
     $ mpiexec -n 4 python3 ./vortices/plot_vortex.py snapshots/*.h5
     $ mpiexec -n 4 python3 ded_to_xarray.py
 
 
 To make FFmpeg video:
-    $ ffmpeg -r 10 -i frames/write_%06d.png ./vortices/vortex.mp4
+    $ ffmpeg -r 10 -i frames/write_%06d.png ./vortices/z_vortex.mp4
 
 """
 
@@ -75,6 +75,24 @@ zcross = lambda A: d3.skew(A) # 90deg rotation anticlockwise (positive)
 coscolat = dist.Field(name='coscolat', bases=(xbasis, ybasis))
 coscolat['g'] = np.cos(np.sqrt((x)**2. + (y)**2) / R)                                       # ['g'] is shortcut for full grid
 
+# Problem and Solver
+#--------------------
+
+# Problem
+problem = d3.IVP([u, h], namespace=locals())
+
+# Rotation
+# problem.add_equation("dt(u) + nu*lap(lap(u)) + g*grad(h)  = - u@grad(u) - 2*Omega*coscolat*zcross(u)")
+problem.add_equation("dt(h) + nu*lap(lap(h)) + H*div(u) = - div(h*u)")
+
+# No rotation
+problem.add_equation("dt(u) + nu*lap(lap(u)) + g*grad(h)  = - u@grad(u)")
+
+
+# Solver
+solver = problem.build_solver(timestepper)
+solver.stop_sim_time = stop_sim_time 
+
 #--------------------------------------------------------------------------------------------
 
 # INITIAL CONDITIONS
@@ -94,6 +112,7 @@ u['g'][1] = vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( y / (r
 
 
 # pdb.set_trace()
+<<<<<<< HEAD:vortices/vortex_centre.py
 
 
 # Initial condition: height
@@ -104,6 +123,8 @@ u['g'][1] = vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( y / (r
 # problem.add_equation("ave(h) = 0")
 # solver = problem.build_solver()
 # solver.solve()
+=======
+>>>>>>> vortices:vortices/vortex.py
 
 
 # Initial condition: perturbation
@@ -113,24 +134,6 @@ h['g'] = H*0.01*np.exp(-((x)**2 + y**2)*100.)
 
 
 #--------------------------------------------------------------------------------------------
-
-# Problem and Solver
-#--------------------
-
-# Problem
-problem = d3.IVP([u, h], namespace=locals())
-
-# Rotation
-problem.add_equation("dt(u) + nu*lap(lap(u)) + g*grad(h)  = - u@grad(u) - 2*Omega*coscolat*zcross(u)")
-problem.add_equation("dt(h) + nu*lap(lap(h)) + H*div(u) = - div(h*u)")
-
-# No rotation
-# problem.add_equation("dt(u) + nu*lap(lap(u)) + g*grad(h)  = - u@grad(u)")
-
-
-# Solver
-solver = problem.build_solver(timestepper)
-solver.stop_sim_time = stop_sim_time 
 
 
 # Snapshots
@@ -142,6 +145,7 @@ snapshots = solver.evaluator.add_file_handler('snapshots', sim_dt=0.1, max_write
 # add velocity field
 snapshots.add_task(h, name='height')
 snapshots.add_task(-d3.div(d3.skew(u)), name='vorticity') 
+# snapshots.add_task(u, name='vortex')
 
 snapshots.add_task(d3.dot(u,ex), name='u')
 snapshots.add_task(d3.dot(u,ey), name='v')
