@@ -151,6 +151,8 @@ snapshots.add_task(-d3.div(d3.skew(u)), name='vorticity')
 snapshots.add_task(d3.dot(u,ex), name='u')
 snapshots.add_task(d3.dot(u,ey), name='v')
 
+snapshots.add_task(np.sqrt(d3.dot(u,ex)**2 + d3.dot(u,ey)**2), name='vortex')
+
 #--------------------------------------------------------------------------------------------
 
 # CFL
