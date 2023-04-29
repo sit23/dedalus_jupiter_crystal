@@ -82,9 +82,9 @@ coscolat['g'] = np.cos(np.sqrt((x)**2. + (y)**2) / R)                           
 problem = d3.IVP([u, h], namespace=locals())
 
 # Rotation
-# problem.add_equation("dt(u) + nu*lap(lap(u)) + g*grad(h)  = - u@grad(u) - 2*Omega*coscolat*zcross(u)")
+problem.add_equation("dt(u) + nu*lap(lap(u)) + g*grad(h)  = - u@grad(u) - 2*Omega*coscolat*zcross(u)")
 # No rotation
-problem.add_equation("dt(u) + nu*lap(lap(u)) + g*grad(h)  = - u@grad(u)")
+# problem.add_equation("dt(u) + nu*lap(lap(u)) + g*grad(h)  = - u@grad(u)")
 
 problem.add_equation("dt(h) + nu*lap(lap(h)) + H*div(u) = - div(h*u)")
 
