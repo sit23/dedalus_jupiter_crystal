@@ -63,22 +63,13 @@ zcross = lambda A: d3.MulCosine(d3.skew(A))
 
 # Initial conditions: zonal jet
 lat = np.pi / 2 - theta + 0*phi                         ## WHY multiply by 0??
-
 umax = 80 * meter / second
-
-# pdb.set_trace()
-
 lat0 = np.pi / 7
 lat1 = np.pi / 2 - lat0
-
 en = np.exp(-4 / (lat1 - lat0)**2)
-
-
 jet = (lat0 <= lat) * (lat <= lat1)
 u_jet = umax / en * np.exp(1 / (lat[jet] - lat0) / (lat[jet] - lat1))
 u['g'][0][jet]  = u_jet
-
-# pdb.set_trace()
 
 
 # Initial conditions: balanced height
@@ -89,7 +80,7 @@ problem.add_equation("ave(h) = 0")
 solver = problem.build_solver()
 solver.solve()
 
-# pdb.set_trace()
+pdb.set_trace()
 
 # Initial conditions: perturbation
 lat2 = np.pi / 4

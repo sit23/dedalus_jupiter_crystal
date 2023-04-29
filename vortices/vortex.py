@@ -13,6 +13,7 @@ To make FFmpeg video:
 
 
 import numpy as np
+import scipy
 import dedalus.public as d3
 import logging
 logger = logging.getLogger(__name__)
@@ -75,6 +76,73 @@ zcross = lambda A: d3.skew(A) # 90deg rotation anticlockwise (positive)
 coscolat = dist.Field(name='coscolat', bases=(xbasis, ybasis))
 coscolat['g'] = np.cos(np.sqrt((x)**2. + (y)**2) / R)                                       # ['g'] is shortcut for full grid
 
+
+#--------------------------------------------------------------------------------------------
+
+# INITIAL CONDITIONS
+
+# Parameters
+b = 2                                      # steepness parameter             
+rm = 1e6 * meter                            # Radius of vortex (km)
+vm = 80 * meter / second                    # maximum velocity of vortex
+r = np.sqrt( x**2 + y**2 )                  # radius
+
+# Initial condition: vortex
+#---------------------------
+
+# Overide u,v components in velocity field
+u['g'][0] += vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( x / (r + 1e-16 ) )
+u['g'][1] += vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( y / (r + 1e-16 ) )
+
+# pdb.set_trace()
+
+
+# Potential vorticity
+#---------------------
+
+f = 2*Omega*coscolat                                # Coriolis
+zeta = -d3.div(d3.skew(u))                          # Vorticity
+
+Ro = 0.2
+Bu = 1
+
+phi0 = 1
+gamma = scipy.special.gammainc(2/b, (1/b) * (r/rm)**b)
+
+phi = dist.Field(name='phi', bases=(xbasis, ybasis))
+phi['g'] = phi0 * ( 1 - (Ro/Bu) * np.exp(1/b) * b**(2/b - 1) * gamma )
+
+
+# pdb.set_trace()
+
+
+# Initial condition: height
+#---------------------------
+# c = dist.Field(name='c')
+# problem = d3.LBVP([h, c], namespace=locals())
+# problem.add_equation("g*lap(h) + c = - div(u@grad(u) + 2*Omega*zcross(u))")
+# problem.add_equation("ave(h) = 0")
+# solver = problem.build_solver()
+# solver.solve()
+
+
+# c = dist.Field(name='c')
+# problem = d3.LBVP([h, c], namespace=locals())
+# problem.add_equation("g*lap(h) + c = - div(u@grad(u) + 2*Omega*coscolat*zcross(u))")
+# h_ave = d3.Average(h, ('x', 'y'))
+# print('f average:', h_ave.evaluate()['g'])
+# solver = problem.build_solver()
+# solver.solve()
+
+
+# Initial condition: perturbation
+#---------------------------------
+# h['g'] = H*0.01*np.exp(-((x)**2 + y**2)*100.)
+
+
+
+#--------------------------------------------------------------------------------------------
+
 # Problem and Solver
 #--------------------
 
@@ -93,60 +161,6 @@ problem.add_equation("dt(h) + nu*lap(lap(h)) + H*div(u) = - div(h*u)")
 solver = problem.build_solver(timestepper)
 solver.stop_sim_time = stop_sim_time 
 
-#--------------------------------------------------------------------------------------------
-
-# INITIAL CONDITIONS
-
-# Parameters
-b = 2                                      # steepness parameter             
-rm = 1e6 * meter                            # Radius of vortex (km)
-vm = 80 * meter / second                    # maximum velocity of vortex
-r = np.sqrt( x**2 + y**2 )                  # radius
-
-# Initial condition: vortex
-#---------------------------
-
-# Overide u,v components in velocity field
-u['g'][0] = vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( x / (r + 1e-16 ) )
-u['g'][1] = vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( y / (r + 1e-16 ) )
-
-
-# Potential vorticity
-#---------------------
-
-f = 2*Omega     #coriolis 
-
-zeta = 1
-
-PV = (zeta + f) / h
-
-
-# pdb.set_trace()
-
-
-# Initial condition: height
-#---------------------------
-# c = dist.Field(name='c')
-# problem = d3.LBVP([h, c], namespace=locals())
-# problem.add_equation("g*lap(h) + c = - div(u@grad(u) + 2*Omega*coscolat*zcross(u))")
-
-# problem.add_equation("ave(h) = 0")
-# h_ave = d3.Average(h, ('x', 'y'))
-# print('f average:', h_ave.evaluate()['g'])
-# pdb.set_trace()
-
-# solver = problem.build_solver()
-# solver.solve()
-
-
-# Initial condition: perturbation
-#---------------------------------
-h['g'] = H*0.01*np.exp(-((x)**2 + y**2)*100.)
-
-
-
-#--------------------------------------------------------------------------------------------
-
 
 # Snapshots
 #-----------
@@ -156,7 +170,8 @@ snapshots = solver.evaluator.add_file_handler('./vortices/vortex_snapshots', sim
 
 # add velocity field
 snapshots.add_task(h, name='height')
-snapshots.add_task(-d3.div(d3.skew(u)), name='vorticity')
+snapshots.add_task(zeta, name='vorticity')
+snapshots.add_task((zeta + f) / phi, name='PV')
 
 snapshots.add_task(d3.dot(u,ex), name='u')
 snapshots.add_task(d3.dot(u,ey), name='v')

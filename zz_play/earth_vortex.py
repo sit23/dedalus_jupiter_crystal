@@ -64,12 +64,12 @@ h = dist.Field(name='h', bases=(xbasis,ybasis))
 
 # Substitutions
 
-x, y = dist.local_grids(xbasis, ybasis)
+x, y = dist.local_grids(xbasis,ybasis)
 ex, ey = coords.unit_vector_fields(dist)
 
 zcross = lambda A: d3.skew(A) # 90deg rotation anticlockwise (positive)
 
-coscolat = dist.Field(name='coscolat', bases=(xbasis, ybasis))
+coscolat = dist.Field(name='coscolat', bases=(xbasis,ybasis))
 coscolat['g'] = np.cos(np.sqrt((x)**2. + (y)**2) / R)  
 
 # pdb.set_trace()
@@ -80,12 +80,12 @@ coscolat['g'] = np.cos(np.sqrt((x)**2. + (y)**2) / R)
 # Initial conditions: balanced height
 c = dist.Field(name='c')
 problem = d3.LBVP([h,c], namespace=locals())
-problem.add_equation("g*lap(h) + c = - div(u@grad(u) + 2*Omega*coscolat*zcross(u))")
-# problem.add_equation("ave(h) = 0")                      ## ISSUE CAUSER
+problem.add_equation("g*lap(h) + c = - div(u@grad(u) + 2*Omega*zcross(u))")
+problem.add_equation("ave(h) = 0")                      ## ISSUE CAUSER
 solver = problem.build_solver()
 solver.solve()
 
-h_average = d3.Average(h, ('x','y'))
+# h_average = d3.Average(h, ('x','y'))
 
 pdb.set_trace()
 
