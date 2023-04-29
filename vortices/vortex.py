@@ -82,9 +82,9 @@ coscolat['g'] = np.cos(np.sqrt((x)**2. + (y)**2) / R)                           
 problem = d3.IVP([u, h], namespace=locals())
 
 # Rotation
-problem.add_equation("dt(u) + nu*lap(lap(u)) + g*grad(h)  = - u@grad(u) - 2*Omega*coscolat*zcross(u)")
+# problem.add_equation("dt(u) + nu*lap(lap(u)) + g*grad(h)  = - u@grad(u) - 2*Omega*coscolat*zcross(u)")
 # No rotation
-# problem.add_equation("dt(u) + nu*lap(lap(u)) + g*grad(h)  = - u@grad(u)")
+problem.add_equation("dt(u) + nu*lap(lap(u)) + g*grad(h)  = - u@grad(u)")
 
 problem.add_equation("dt(h) + nu*lap(lap(h)) + H*div(u) = - div(h*u)")
 
@@ -98,7 +98,7 @@ solver.stop_sim_time = stop_sim_time
 # INITIAL CONDITIONS
 
 # Parameters
-b = 1                                       # steepness parameter             
+b = 2                                      # steepness parameter             
 rm = 1e6 * meter                            # Radius of vortex (km)
 vm = 80 * meter / second                    # maximum velocity of vortex
 r = np.sqrt( x**2 + y**2 )                  # radius
@@ -109,6 +109,16 @@ r = np.sqrt( x**2 + y**2 )                  # radius
 # Overide u,v components in velocity field
 u['g'][0] = vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( x / (r + 1e-16 ) )
 u['g'][1] = vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( y / (r + 1e-16 ) )
+
+
+# Potential vorticity
+#---------------------
+
+f = 2*Omega     #coriolis 
+
+zeta = 1
+
+PV = (zeta + f) / h
 
 
 # pdb.set_trace()
@@ -142,7 +152,7 @@ h['g'] = H*0.01*np.exp(-((x)**2 + y**2)*100.)
 #-----------
 
 # Analysis
-snapshots = solver.evaluator.add_file_handler('snapshots', sim_dt=0.1, max_writes=10)
+snapshots = solver.evaluator.add_file_handler('./vortices/vortex_snapshots', sim_dt=0.1, max_writes=10)
 
 # add velocity field
 snapshots.add_task(h, name='height')

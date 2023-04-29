@@ -8,7 +8,7 @@ Options:
     --output=<dir>  Output directory [default: ./frames]
 
 
-mpiexec -n 4 python3 ./vortices/plot_vortex.py snapshots/*.h5 --output ./vortices/vortex_frames
+mpiexec -n 4 python3 ./vortices/plot_vortex.py ./vortices/vortex_snapshots/*.h5 --output ./vortices/vortex_frames
 
 ffmpeg -r 10 -i ./vortices/vortex_frames/write_%06d.png ./vortices/z_vortex.mp4
 
