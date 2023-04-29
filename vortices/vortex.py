@@ -91,7 +91,7 @@ r = np.sqrt( x**2 + y**2 )                  # radius
 #---------------------------
 
 # Overide u,v components in velocity field
-u['g'][0] += vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( x / (r + 1e-16 ) )
+u['g'][0] = vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( x / (r + 1e-16 ) )
 u['g'][1] += vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( y / (r + 1e-16 ) )
 
 # pdb.set_trace()
@@ -148,16 +148,8 @@ phi['g'] = phi0 * ( 1 - (Ro/Bu) * np.exp(1/b) * b**(2/b - 1) * gamma )
 
 # Problem
 problem = d3.IVP([u, h], namespace=locals())
-
-# Rotation
 problem.add_equation("dt(u) + nu*lap(lap(u)) + g*grad(h)  = - u@grad(u) - 2*Omega*coscolat*zcross(u)")
-# No rotation
-# problem.add_equation("dt(u) + nu*lap(lap(u)) + g*grad(h)  = - u@grad(u)")
-
 problem.add_equation("dt(h) + nu*lap(lap(h)) + H*div(u) = - div(h*u)")
-
-
-# Solver
 solver = problem.build_solver(timestepper)
 solver.stop_sim_time = stop_sim_time 
 
