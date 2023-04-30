@@ -59,16 +59,12 @@ ybasis = d3.RealFourier(coords['y'], size=Nz, bounds=(-Lz/2, Lz/2), dealias=deal
 h = dist.Field(name='h', bases=(xbasis,ybasis))
 u = dist.VectorField(coords, name='u', bases=(xbasis,ybasis))
 
-# v = dist.Field(name='v', bases=(xbasis, ybasis))
-
 # Substitutions
 x, y = dist.local_grids(xbasis, ybasis)
 ex, ey = coords.unit_vector_fields(dist)
 
 #--------------------------------------------------------------------------------------------
 
-# Problem and Solver
-#--------------------
 
 # Set up basic operators
 zcross = lambda A: d3.skew(A) # 90deg rotation anticlockwise (positive)
@@ -77,22 +73,20 @@ coscolat = dist.Field(name='coscolat', bases=(xbasis, ybasis))
 coscolat['g'] = np.cos(np.sqrt((x)**2. + (y)**2) / R)                                       # ['g'] is shortcut for full grid
 
 
-#--------------------------------------------------------------------------------------------
-
 # INITIAL CONDITIONS
 
 # Parameters
-b = 2                                      # steepness parameter             
-rm = 1e6 * meter                            # Radius of vortex (km)
-vm = 80 * meter / second                    # maximum velocity of vortex
-r = np.sqrt( x**2 + y**2 )                  # radius
+b = 2                                                # steepness parameter             
+rm = 1e6 * meter                                     # Radius of vortex (km)
+vm = 80 * meter / second                             # maximum velocity of vortex
+r = np.sqrt( x**2 + y**2 )                           # radius
 
 # Initial condition: vortex
 #---------------------------
 
 # Overide u,v components in velocity field
 u['g'][0] = vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( x / (r + 1e-16 ) )
-u['g'][1] += vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( y / (r + 1e-16 ) )
+u['g'][1] = vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( y / (r + 1e-16 ) )
 
 # pdb.set_trace()
 
@@ -137,7 +131,7 @@ phi['g'] = phi0 * ( 1 - (Ro/Bu) * np.exp(1/b) * b**(2/b - 1) * gamma )
 
 # Initial condition: perturbation
 #---------------------------------
-# h['g'] = H*0.01*np.exp(-((x)**2 + y**2)*100.)
+h['g'] = H*0.01*np.exp(-((x)**2 + y**2)*100.)
 
 
 
@@ -157,7 +151,7 @@ solver.stop_sim_time = stop_sim_time
 # Snapshots
 #-----------
 
-# Analysis
+# Set up and save snapshots
 snapshots = solver.evaluator.add_file_handler('./vortices/vortex_snapshots', sim_dt=0.1, max_writes=10)
 
 # add velocity field
