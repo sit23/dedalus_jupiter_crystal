@@ -79,7 +79,7 @@ coscolat['g'] = np.cos(np.sqrt((x)**2. + (y)**2) / R)                           
 b = 2                                                # steepness parameter             
 rm = 1e6 * meter                                     # Radius of vortex (km)
 vm = 80 * meter / second                             # maximum velocity of vortex
-r = np.sqrt( x**2 + y**2 )                           # radius
+r = np.sqrt( x**2 + y**2 ) <= rm                        # radius
 
 # Initial condition: vortex
 #---------------------------
@@ -112,26 +112,17 @@ phi['g'] = phi0 * ( 1 - (Ro/Bu) * np.exp(1/b) * b**(2/b - 1) * gamma )
 
 # Initial condition: height
 #---------------------------
-# c = dist.Field(name='c')
-# problem = d3.LBVP([h, c], namespace=locals())
-# problem.add_equation("g*lap(h) + c = - div(u@grad(u) + 2*Omega*coscolat*zcross(u))")
-# problem.add_equation("integ(h) = 0")
-# solver = problem.build_solver()
-# solver.solve()
-
-
-# c = dist.Field(name='c')
-# problem = d3.LBVP([h, c], namespace=locals())
-# problem.add_equation("g*lap(h) + c = - div(u@grad(u) + 2*Omega*coscolat*zcross(u))")
-# h_ave = d3.Average(h, ('x', 'y'))
-# print('f average:', h_ave.evaluate()['g'])
-# solver = problem.build_solver()
-# solver.solve()
+c = dist.Field(name='c')
+problem = d3.LBVP([h, c], namespace=locals())
+problem.add_equation("g*lap(h) + c = - div(u@grad(u) + 2*Omega*coscolat*zcross(u))")
+problem.add_equation("integ(h) = 0")
+solver = problem.build_solver()
+solver.solve()
 
 
 # Initial condition: perturbation
 #---------------------------------
-h['g'] += H*0.01*np.exp(-((x)**2 + y**2)*100.)
+h['g'] = H*0.01*np.exp(-((x)**2 + y**2)*100.)
 
 
 
@@ -144,8 +135,12 @@ h['g'] += H*0.01*np.exp(-((x)**2 + y**2)*100.)
 problem = d3.IVP([u, h], namespace=locals())
 problem.add_equation("dt(u) + nu*lap(lap(u)) + g*grad(h)  = - u@grad(u) - 2*Omega*coscolat*zcross(u)")
 problem.add_equation("dt(h) + nu*lap(lap(h)) + H*div(u) = - div(h*u)")
+# h_ave = d3.Average(h, ('x', 'y'))
+# print('f average:', h_ave.evaluate()['g'])
 solver = problem.build_solver(timestepper)
 solver.stop_sim_time = stop_sim_time 
+
+# pdb.set_trace()
 
 
 # Snapshots
