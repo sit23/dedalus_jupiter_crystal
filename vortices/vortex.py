@@ -84,6 +84,7 @@ r = np.sqrt( x**2 + y**2 ) <= rm                        # radius
 # Initial condition: vortex
 #---------------------------
 
+
 # Overide u,v components in velocity field
 u['g'][0] = vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( x / (r + 1e-16 ) )
 u['g'][1] = vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( y / (r + 1e-16 ) )
@@ -100,7 +101,7 @@ zeta = -d3.div(d3.skew(u))                          # Vorticity
 Ro = 0.2
 Bu = 1
 
-phi0 = 1
+phi0 = Bu * (f*rm)**2
 gamma = scipy.special.gammainc(2/b, (1/b) * (r/rm)**b)
 
 phi = dist.Field(name='phi', bases=(xbasis, ybasis))

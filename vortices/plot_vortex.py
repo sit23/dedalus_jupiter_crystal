@@ -35,7 +35,7 @@ def main(filename, start, count, output):
     savename_func = lambda write: 'write_{:06}.png'.format(write)
 
     # Layout
-    nrows, ncols = 1, 4
+    nrows, ncols = 1,4
     image = plot_tools.Box(1, 1)
     pad = plot_tools.Frame(0.2, 0, 0, 0)
     margin = plot_tools.Frame(0.2, 0.1, 0, 0)
