@@ -42,7 +42,7 @@ h = dist.Field(name='h', bases=(xbasis,ybasis))
 x, y = dist.local_grids(xbasis,ybasis)
 ex, ey = coords.unit_vector_fields(dist)
 
-zcross = lambda A: d3.skew(A) # 90deg rotation anticlockwise (positive)
+zcross = lambda A: d3.skew(A)
 
 
 # INITIAL CONDITIONS
