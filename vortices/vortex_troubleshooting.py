@@ -51,6 +51,6 @@ zcross = lambda A: d3.skew(A)
 c = dist.Field(name='c')
 problem = d3.LBVP([h,c], namespace=locals())
 problem.add_equation("g*lap(h) + c = - div(u@grad(u) + 2*Omega*zcross(u))")
-problem.add_equation("ave(h) = 0")                      ## ISSUE CAUSER
+problem.add_equation("integ(h) = 0")                      ## ISSUE CAUSER
 solver = problem.build_solver()
 solver.solve()

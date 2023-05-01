@@ -114,8 +114,8 @@ phi['g'] = phi0 * ( 1 - (Ro/Bu) * np.exp(1/b) * b**(2/b - 1) * gamma )
 #---------------------------
 # c = dist.Field(name='c')
 # problem = d3.LBVP([h, c], namespace=locals())
-# problem.add_equation("g*lap(h) + c = - div(u@grad(u) + 2*Omega*zcross(u))")
-# problem.add_equation("ave(h) = 0")
+# problem.add_equation("g*lap(h) + c = - div(u@grad(u) + 2*Omega*coscolat*zcross(u))")
+# problem.add_equation("integ(h) = 0")
 # solver = problem.build_solver()
 # solver.solve()
 
@@ -131,7 +131,7 @@ phi['g'] = phi0 * ( 1 - (Ro/Bu) * np.exp(1/b) * b**(2/b - 1) * gamma )
 
 # Initial condition: perturbation
 #---------------------------------
-h['g'] = H*0.01*np.exp(-((x)**2 + y**2)*100.)
+h['g'] += H*0.01*np.exp(-((x)**2 + y**2)*100.)
 
 
 
