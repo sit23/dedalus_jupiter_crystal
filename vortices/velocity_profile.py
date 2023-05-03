@@ -28,25 +28,36 @@ r_south = np.arange(-6*rm_north, 0)
 
 
 # Velocity profile
-v1 = vm * ( r_north / rm_north ) * np.exp( (1/b1) * ( 1 - ( r_north/rm_north )**b1 ) )
-v2 = vm * ( r_north / rm_north ) * np.exp( (1/b2) * ( 1 - ( r_north/rm_north )**b2 ) )
-v3 = vm * ( r_north / rm_north ) * np.exp( (1/b3) * ( 1 - ( r_north/rm_north )**b3 ) )
+#------------------
 
-v1_south = vm * ( r_south / -rm_south ) * np.exp( (1/b1) * ( 1 - ( r_south/-rm_south )**b1 ) )
-v2_south = vm * ( r_south / -rm_south ) * np.exp( (1/b2) * ( 1 - ( r_south/-rm_south )**b2 ) )
-v3_south = vm * ( r_south / -rm_south ) * np.exp( (1/b3) * ( 1 - ( r_south/-rm_south )**b3 ) )
+# Vary steepness parameters to be looped through
+bb = [1,2,3]
+
+# Create empty lists to appended in loop
+v_north = []
+v_south = []
+
+for b in bb:
+
+    vn = vm * ( r_north / rm_north ) * np.exp( (1/b) * ( 1 - ( r_north/rm_north )**b ) )
+    vs = vm * ( r_south / -rm_south ) * np.exp( (1/b) * ( 1 - ( r_south/-rm_south )**b ) )
+
+    v_north.append(vn)
+    v_south.append(vs)
+
+
 
 
 # Create plot
 #----------------------------------------------------------------------------------------------
 
 plt.figure()
-plt.plot(r_north, v1, color='#1f77b4', label=r'$b=1$')
-plt.plot(r_north, v2, color='#ff7f0e', label=r'$b=1.5$')
-plt.plot(r_north, v3, color='#2ca02c', label=r'$b=2$')
-plt.plot(r_south, v1_south, color='#1f77b4')
-plt.plot(r_south, v2_south, color='#ff7f0e')
-plt.plot(r_south, v3_south, color='#2ca02c')
+plt.plot(r_north, v_north[0], color='#1f77b4', label=r'$b=1$')
+plt.plot(r_north, v_north[1], color='#ff7f0e', label=r'$b=1.5$')
+plt.plot(r_north, v_north[2], color='#2ca02c', label=r'$b=2$')
+plt.plot(r_south, v_south[0], color='#1f77b4')
+plt.plot(r_south, v_south[1], color='#ff7f0e')
+plt.plot(r_south, v_south[2], color='#2ca02c')
 plt.legend()
 plt.xlabel('Distance (km)')
 plt.ylabel('Velocity (m/s)')

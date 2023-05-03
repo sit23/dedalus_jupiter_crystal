@@ -1,7 +1,7 @@
 """
 
 To run and plot using e.g. 4 processes:
-    $ mpiexec -n 4 python3 ./vortices/vortex.py
+    $ mpiexec -n 4 python3 ./vortices/non_centre.py
     $ mpiexec -n 4 python3 ./vortices/plot_vortex.py snapshots/*.h5
     $ mpiexec -n 4 python3 ded_to_xarray.py
 
@@ -86,9 +86,13 @@ r = np.sqrt(x**2 + y**2) <= rm                       # radius
 #---------------------------
 
 # Overide u,v components in velocity field
-u['g'][0] = vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( x / ( r + 1e-16 ) )
-u['g'][1] = vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( y / ( r + 1e-16 ) )
+# u['g'][0] = vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( x / ( r + 1e-16 ) )
+# u['g'][1] = vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( y / ( r + 1e-16 ) )
 
+u['g'][0] = vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( x / ( (r+0.5) + 1e-16 ) )
+u['g'][1] = vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( y / ( (r+0.5) + 1e-16 ) )
+
+# pdb.set_trace()
 
 
 # Potential vorticity
