@@ -28,14 +28,14 @@ def main(filename, start, count, output):
     """Save plot of specified tasks for given range of analysis writes."""
 
     # Plot settings
-    tasks = ['u', 'v', 'vortex', 'vorticity']
+    tasks = ['u', 'v', 'vortex', 'vorticity', 'PV', 'height']
     scale = 2
     dpi = 200
     title_func = lambda sim_time: 't = {:.3f}'.format(sim_time)
     savename_func = lambda write: 'write_{:06}.png'.format(write)
 
     # Layout
-    nrows, ncols = 1,4
+    nrows, ncols = 2,3
     image = plot_tools.Box(1, 1)
     pad = plot_tools.Frame(0.2, 0, 0, 0)
     margin = plot_tools.Frame(0.2, 0.1, 0, 0)
