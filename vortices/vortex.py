@@ -76,38 +76,36 @@ coscolat['g'] = np.cos(np.sqrt((x)**2. + (y)**2) / R)                           
 # INITIAL CONDITIONS
 
 # Parameters
-b = 2                                                # steepness parameter             
+b = 1.5                                                # steepness parameter             
 rm = 1e6 * meter                                     # Radius of vortex (km)
 vm = 80 * meter / second                             # maximum velocity of vortex
 
-r = np.sqrt(x**2 + y**2) <= rm                       # radius
+a = 0.1
+r = np.sqrt((x-a)**2 + (y-a)**2)                     # radius
+
 
 # Initial condition: vortex
 #---------------------------
 
 # Overide u,v components in velocity field
-u['g'][0] = vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( x / ( r + 1e-16 ) )
-u['g'][1] = vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( y / ( r + 1e-16 ) )
+u['g'][0] = vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (x-a) / ( r + 1e-16 ) )
+u['g'][1] = vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (y-a) / ( r + 1e-16 ) )
 
 
 
 # Potential vorticity
 #---------------------
 
-f = 2*Omega*coscolat                                # Coriolis
+f = 2*Omega#*coscolat                                # Coriolis
 zeta = -d3.div(d3.skew(u))                          # Vorticity
+Ro = 0.2
+Bu = 1
 
-# Ro = 0.2
-# Bu = 1
+phi0 = Bu * (f*rm)**2
+gamma = scipy.special.gammainc(2/b, (1/b) * (r/rm)**b)
 
-# phi0 = Bu * (f*rm)**2
-# gamma = scipy.special.gammainc(2/b, (1/b) * (r/rm)**b)
-
-# phi = dist.Field(name='phi', bases=(xbasis, ybasis))
-# phi['g'] = phi0 * ( 1 - (Ro/Bu) * np.exp(1/b) * b**( (2/b) - 1) * gamma )
-
-
-# pdb.set_trace()
+phi = dist.Field(name='phi', bases=(xbasis, ybasis))
+phi['g'] = phi0 * ( 1 - (Ro/Bu) * np.exp(1/b) * b**( (2/b) - 1) * gamma )
 
 
 # Initial condition: height
@@ -122,7 +120,7 @@ solver.solve()
 
 # Initial condition: perturbation
 #---------------------------------
-h['g'] = H*0.01*np.exp(-((x)**2 + y**2)*100.)
+# h['g'] = H*0.01*np.exp(-((x)**2 + y**2)*100.)
 
 
 
@@ -150,7 +148,7 @@ snapshots = solver.evaluator.add_file_handler('./vortices/vortex_snapshots', sim
 # add velocity field
 snapshots.add_task(h, name='height')
 snapshots.add_task(zeta, name='vorticity')
-# snapshots.add_task((zeta + f) / phi, name='PV')
+snapshots.add_task((zeta + f) / phi, name='PV')
 
 snapshots.add_task(d3.dot(u,ex), name='u')
 snapshots.add_task(d3.dot(u,ey), name='v')

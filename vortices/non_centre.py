@@ -81,23 +81,16 @@ rm = 1e6 * meter                                     # Radius of vortex (km)
 vm = 80 * meter / second                             # maximum velocity of vortex
 
 a = 0.2
-r = np.sqrt((x-a)**2 + (y-a)**2) #~<= rm                       # radius
+r = np.sqrt((x-a)**2 + (y-a)**2)                     # radius
+
 
 # Initial condition: vortex
 #---------------------------
 
-# pdb.set_trace()
-
 # Overide u,v components in velocity field
-u['g'][0] = vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (y-a) / ( r + 1e-16 ) )
-u['g'][1] = vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (x-a) / ( r + 1e-16 ) )
+u['g'][0] = vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (x-a) / ( r + 1e-16 ) )
+u['g'][1] = vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (y-a) / ( r + 1e-16 ) )
 
-
-
-# u['g'][0] = vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( x / ( (r+a) + 1e-16 ) )
-# u['g'][1] = vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( y / ( (r+a) + 1e-16 ) )
-
-# pdb.set_trace()
 
 
 # Potential vorticity
@@ -105,14 +98,11 @@ u['g'][1] = vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (x-a) 
 
 f = 2*Omega                                # Coriolis
 zeta = -d3.div(d3.skew(u))                          # Vorticity
-
 Ro = 0.2
 Bu = 1
 
 phi0 = Bu * (f*rm)**2
 gamma = scipy.special.gammainc(2/b, (1/b) * (r/rm)**b)
-
-# pdb.set_trace()
 
 phi = dist.Field(name='phi', bases=(xbasis, ybasis))
 phi['g'] = phi0 * ( 1 - (Ro/Bu) * np.exp(1/b) * b**( (2/b) - 1) * gamma )
