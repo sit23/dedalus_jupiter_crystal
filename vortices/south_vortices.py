@@ -63,46 +63,59 @@ u = dist.VectorField(coords, name='u', bases=(xbasis,ybasis))
 x, y = dist.local_grids(xbasis, ybasis)
 ex, ey = coords.unit_vector_fields(dist)
 
-#--------------------------------------------------------------------------------------------
-
-
 # Set up basic operators
-zcross = lambda A: d3.skew(A) # 90deg rotation anticlockwise (positive)
+zcross = lambda A: d3.skew(A)
 
 coscolat = dist.Field(name='coscolat', bases=(xbasis, ybasis))
-coscolat['g'] = np.cos(np.sqrt((x)**2. + (y)**2) / R)                                       # ['g'] is shortcut for full grid
+coscolat['g'] = np.cos(np.sqrt((x)**2. + (y)**2) / R)
 
+#--------------------------------------------------------------------------------------------
 
 # INITIAL CONDITIONS
-
-# Parameters
-b = 1.5                                                # steepness parameter             
-rm = 1e6 * meter                                     # Radius of vortex (km)
-vm = 80 * meter / second                             # maximum velocity of vortex
-
-a = 0.2
-r = np.sqrt((x-a)**2 + (y-a)**2)                     # radius
 
 
 # Initial condition: vortex
 #---------------------------
 
-# Overide u,v components in velocity field
-u['g'][0] = vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (x-a) / ( r + 1e-16 ) )
-u['g'][1] = vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (y-a) / ( r + 1e-16 ) )
+# Parameters
+b = 1.5                                              # steepness parameter             
+rm = 1e6 * meter                                     # Radius of vortex (km)
+vm = 80 * meter / second                             # maximum velocity of vortex
+
+# South pole coordinates
+south_lat = [88.6, 83.7, 84.3, 85.0, 84.1, 83.2]
+south_long = [211.3, 157.1, 94.3, 13.4, 298.8, 229.7]
+
+# Define conversion function
+def conversion(lat, lon):
+    lat, lon = np.deg2rad(lat), np.deg2rad(lon)
+    x = R * np.cos(lat) * np.cos(lon)
+    y = R * np.cos(lat) * np.sin(lon)
+    return x, y
+
+for i in range(len(south_lat)):
+
+    xx,yy = conversion(south_lat, south_long)
+    r = np.sqrt( (x-xx[i])**2 + (y-yy[i])**2 )
+
+    # Overide u,v components in velocity field
+    u['g'][0] += vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (x-xx[i]) / ( r + 1e-16 ) )
+    u['g'][1] += vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (y-yy[i]) / ( r + 1e-16 ) )
 
 
 
 # Potential vorticity
 #---------------------
 
-f = 2*Omega                                # Coriolis
+f = 2*Omega#*coscolat                                # Coriolis
 zeta = -d3.div(d3.skew(u))                          # Vorticity
 Ro = 0.2
 Bu = 1
 
 phi0 = Bu * (f*rm)**2
 gamma = scipy.special.gammainc(2/b, (1/b) * (r/rm)**b)
+
+# pdb.set_trace()
 
 phi = dist.Field(name='phi', bases=(xbasis, ybasis))
 phi['g'] = phi0 * ( 1 - (Ro/Bu) * np.exp(1/b) * b**( (2/b) - 1) * gamma )
@@ -121,7 +134,6 @@ solver.solve()
 # Initial condition: perturbation
 #---------------------------------
 # h['g'] = H*0.01*np.exp(-((x)**2 + y**2)*100.)
-
 
 
 #--------------------------------------------------------------------------------------------

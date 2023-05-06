@@ -52,12 +52,14 @@ for b in bb:
 #----------------------------------------------------------------------------------------------
 
 plt.figure()
+
 plt.plot(r_north, v_north[0], color='#1f77b4', label=r'$b=1$')
 plt.plot(r_north, v_north[1], color='#ff7f0e', label=r'$b=1.5$')
 plt.plot(r_north, v_north[2], color='#2ca02c', label=r'$b=2$')
 plt.plot(r_south, v_south[0], color='#1f77b4')
 plt.plot(r_south, v_south[1], color='#ff7f0e')
 plt.plot(r_south, v_south[2], color='#2ca02c')
+
 plt.legend()
 plt.xlabel('Distance (km)')
 plt.ylabel('Velocity (m/s)')

@@ -45,11 +45,17 @@ def conversion(lat, lon):
 
 # Create list of cartesian coordinates
 coords_south = []
+coords_north = []
 
 for i in range(len(south_lat)):
 
     (x, y) = conversion(south_lat[i], south_long[i])
     coords_south.append((x,y))
+
+for i in range(len(north_lat)):
+
+    (x, y) = conversion(north_lat[i], north_long[i])
+    coords_north.append((x,y))
 
 
 #--------------------------------------------------------------------------------------------
@@ -57,14 +63,23 @@ for i in range(len(south_lat)):
 
 # PLOTS
 
-plt.figure(figsize=(5,5))
+plt.figure(figsize=(8,4))
+
+plt.subplot(1,2,1)
 plt.xlim(-Lx/2, Lx/2)
 plt.ylim(-Lz/2, Lz/2)
-
-#Circles
 for i in range(len(coords_south)):
-
     circle = plt.Circle( coords_south[i], radius=rm, color='darkred')
     plt.gca().add_patch(circle)
 
+plt.title('South Pole Vortices')
+
+plt.subplot(1,2,2)
+plt.xlim(-Lx/2, Lx/2)
+plt.ylim(-Lz/2, Lz/2)
+for i in range(len(coords_north)):
+    circle = plt.Circle( coords_north[i], radius=rm, color='darkred')
+    plt.gca().add_patch(circle)
+
+plt.title('North Pole Vortices')
 plt.show()
