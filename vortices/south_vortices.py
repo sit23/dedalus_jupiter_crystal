@@ -1,7 +1,7 @@
 """
 
 To run and plot using e.g. 4 processes:
-    $ mpiexec -n 4 python3 ./vortices/non_centre.py
+    $ mpiexec -n 4 python3 ./vortices/south_vortices.py
     $ mpiexec -n 4 python3 ./vortices/plot_vortex.py snapshots/*.h5
     $ mpiexec -n 4 python3 ded_to_xarray.py
 

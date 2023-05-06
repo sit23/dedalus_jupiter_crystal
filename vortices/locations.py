@@ -5,66 +5,66 @@ import pdb
 
 # Simulation units
 meter = 1 / 69.911e6
-hour = 1
-second = hour / 3600
 
 # Numerical Parameters
 Lx, Lz = 1, 1
-Nx, Nz = 128, 128
-dealias = 3/2                   
-stop_sim_time = 20
-timestepper = d3.RK222
-max_timestep = 1e-2
-dtype = np.float64
 
-# Planetary Configurations
-R = 69.911e6 * meter           
-Omega = 1.76e-4 / second            
-nu = 1e5 * meter**2 / second / 32**2   
-g = 24.79 * meter / second**2      
-H = 5e4 * meter 
+# Radius of vortex (km)
+rm = 1e6 * meter
+
+# Radius of Jupiter
+R = 69.911e6 * meter 
 
 #--------------------------------------------------------------------------------------------
 
-# Dedalus set ups
-#-----------------
+# Longitude and latitude conversion
+#------------------------------------
 
-# Bases
-coords = d3.CartesianCoordinates('x', 'y')
-dist = d3.Distributor(coords, dtype=dtype)                                                  
-xbasis = d3.RealFourier(coords['x'], size=Nx, bounds=(-Lx/2, Lx/2), dealias=dealias)
-ybasis = d3.RealFourier(coords['y'], size=Nz, bounds=(-Lz/2, Lz/2), dealias=dealias)
+# South pole coordinates
+south_lat = [88.6, 83.7, 84.3, 85.0, 84.1, 83.2]
+south_long = [211.3, 157.1, 94.3, 13.4, 298.8, 229.7]
 
-# Fields both functions of x,y
-h = dist.Field(name='h', bases=(xbasis,ybasis))
-u = dist.VectorField(coords, name='u', bases=(xbasis,ybasis))
-
-# Substitutions
-x, y = dist.local_grids(xbasis, ybasis)
-ex, ey = coords.unit_vector_fields(dist)
-
-#--------------------------------------------------------------------------------------------
+# North pole coordinates
+north_lat =[89.6, 82.9, 83.8, 82.0, 83.2, 82.9, 83.2, 82.3, 83.5]
+north_long =[230.4, 1.4, 50.7, 95.3, 137.6, 183.4, 227.6, 269.9, 314.8]
 
 
-# Set up basic operators
-zcross = lambda A: d3.skew(A) # 90deg rotation anticlockwise (positive)
+# Conversion
+#------------
 
-coscolat = dist.Field(name='coscolat', bases=(xbasis, ybasis))
-coscolat['g'] = np.cos(np.sqrt((x)**2. + (y)**2) / R)                                       # ['g'] is shortcut for full grid
+# Define conversion function
+def conversion(lat, lon):
+
+    lat, lon = np.deg2rad(lat), np.deg2rad(lon)
+
+    x = R * np.cos(lat) * np.cos(lon)
+    y = R * np.cos(lat) * np.sin(lon)
+
+    return x, y
 
 
-# INITIAL CONDITIONS
+# Create list of cartesian coordinates
+coords_south = []
 
-# Parameters
-b = 1.5                                                # steepness parameter             
-rm = 1e6 * meter                                     # Radius of vortex (km)
-vm = 80 * meter / second                             # maximum velocity of vortex
+for i in range(len(south_lat)):
 
-a = 0.1
-r = np.sqrt((x-a)**2 + (y-a)**2)                     # radius
+    (x, y) = conversion(south_lat[i], south_long[i])
+    coords_south.append((x,y))
+
 
 #--------------------------------------------------------------------------------------------
 
 
-# PLOTTING
+# PLOTS
 
+plt.figure(figsize=(5,5))
+plt.xlim(-Lx/2, Lx/2)
+plt.ylim(-Lz/2, Lz/2)
+
+#Circles
+for i in range(len(coords_south)):
+
+    circle = plt.Circle( coords_south[i], radius=rm, color='darkred')
+    plt.gca().add_patch(circle)
+
+plt.show()
