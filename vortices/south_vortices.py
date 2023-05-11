@@ -99,26 +99,25 @@ for i in range(len(south_lat)):
     r = np.sqrt( (x-xx[i])**2 + (y-yy[i])**2 )
 
     # Overide u,v components in velocity field
-    u['g'][0] += vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (x-xx[i]) / ( r + 1e-16 ) )
-    u['g'][1] += vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (y-yy[i]) / ( r + 1e-16 ) )
+    u['g'][0] += vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (y-yy[i]) / ( r + 1e-16 ) )
+    u['g'][1] += - vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (x-xx[i]) / ( r + 1e-16 ) )
 
 
 
 # Potential vorticity
 #---------------------
 
-f = 2*Omega#*coscolat                                # Coriolis
-zeta = -d3.div(d3.skew(u))                          # Vorticity
+ff = 2 * Omega * np.cos(np.sqrt((x)**2. + (y)**2) / R)                      # Coriolis
+zeta = -d3.div(d3.skew(u))                          
 Ro = 0.2
 Bu = 1
 
-phi0 = Bu * (f*rm)**2
+phi0 = Bu * (ff*rm)**2
 gamma = scipy.special.gammainc(2/b, (1/b) * (r/rm)**b)
-
-# pdb.set_trace()
+term = 1 - (Ro/Bu) * np.exp(1/b) * b**( (2/b) - 1) * gamma
 
 phi = dist.Field(name='phi', bases=(xbasis, ybasis))
-phi['g'] = phi0 * ( 1 - (Ro/Bu) * np.exp(1/b) * b**( (2/b) - 1) * gamma )
+phi['g'] = phi0 * term 
 
 
 # Initial condition: height
@@ -159,11 +158,10 @@ snapshots = solver.evaluator.add_file_handler('./vortices/vortex_snapshots', sim
 # add velocity field
 snapshots.add_task(h, name='height')
 snapshots.add_task(zeta, name='vorticity')
-snapshots.add_task((zeta + f) / phi, name='PV')
+snapshots.add_task((zeta + 2*Omega*coscolat) / phi, name='PV')
 
 snapshots.add_task(d3.dot(u,ex), name='u')
 snapshots.add_task(d3.dot(u,ey), name='v')
-
 snapshots.add_task(np.sqrt(d3.dot(u,ex)**2 + d3.dot(u,ey)**2), name='vortex')
 
 #--------------------------------------------------------------------------------------------
