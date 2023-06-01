@@ -9,6 +9,11 @@ To run and plot using e.g. 4 processes:
 To make FFmpeg video:
     $ ffmpeg -r 10 -i ./vortices/vortex_frames/write_%06d.png ./vortices/z_vortex.mp4
 
+
+mpiexec -n 4 python3 ./vortices/south_vortices.py &&
+mpiexec -n 4 python3 ./vortices/plot_vortex.py ./vortices/vortex_snapshots/*.h5 --output ./vortices/vortex_frames &&
+ffmpeg -r 20 -i ./vortices/vortex_frames/write_%06d.png ./vortices/z_vortex.mp4
+
 """
 
 
@@ -31,7 +36,7 @@ second = hour / 3600
 Lx, Lz = 1, 1
 Nx, Nz = 128, 128
 dealias = 3/2                   
-stop_sim_time = 20
+stop_sim_time = 500
 timestepper = d3.RK222
 max_timestep = 1e-2
 dtype = np.float64
@@ -116,7 +121,11 @@ solver.solve()
 
 # Initial condition: perturbation
 #---------------------------------
-# h['g'] = H*0.01*np.exp(-((x)**2 + y**2)*100.) rand.rand
+# h.fill_random('g')
+
+# pdb.set_trace()
+
+h['g'] = ( np.random.rand(h['g'].shape[0], h['g'].shape[1]) - 0.5 ) * 1.5e-5
 
 
 #--------------------------------------------------------------------------------------------
@@ -142,7 +151,7 @@ snapshots = solver.evaluator.add_file_handler('./vortices/vortex_snapshots', sim
 # add velocity field
 snapshots.add_task(h, name='height')
 snapshots.add_task(-d3.div(d3.skew(u)), name='vorticity')
-snapshots.add_task((-d3.div(d3.skew(u)) + 2*Omega*coscolat) / h, name='PV')
+snapshots.add_task((-d3.div(d3.skew(u)) + 2*Omega*coscolat) / (h+H), name='PV')
 
 snapshots.add_task(d3.dot(u,ex), name='u')
 snapshots.add_task(d3.dot(u,ey), name='v')
