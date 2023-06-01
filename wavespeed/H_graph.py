@@ -64,8 +64,8 @@ xticks = list(map(convert_string, xx))
 # plot for true vs numerical
 #-----------------------------
 
-plt.figure(figsize=(15,6))
-plt.subplot(1, 2, 1)
+plt.figure(figsize=(6,9))
+plt.subplot(2, 1, 1)
 plt.scatter(H_range, c_numeric, label="Numerical", color='darkturquoise')
 plt.scatter(H_range, c_true, label="True", color='blueviolet')
 plt.xticks(H_range, xticks)
@@ -79,14 +79,14 @@ plt.title('True and numerical wavespeed against equilibrium height')
 
 difference = abs(c_numeric - c_true)
 
-plt.subplot(1, 2, 2)
-plt.plot(H_range, difference, color='firebrick')
-plt.ylim(bottom=0)
-plt.xticks(H_range, xticks)
-plt.xlabel(r'$H (10^4)$')
-plt.ylabel('Difference')
-plt.title('Difference plot of true vs numerical results')
-plt.savefig('H_exp1.pdf')
+# plt.subplot(1, 2, 2)
+# plt.plot(H_range, difference, color='firebrick')
+# plt.ylim(bottom=0)
+# plt.xticks(H_range, xticks)
+# plt.xlabel(r'$H (10^4)$')
+# plt.ylabel('Difference')
+# plt.title('Difference plot of true vs numerical results')
+# plt.savefig('H_exp1.pdf')
 
 
 # Percentage error
@@ -94,10 +94,11 @@ plt.savefig('H_exp1.pdf')
 
 percentage_error = (difference / c_true) * 100
 
-plt.figure()
+plt.subplot(2, 1, 2)
 plt.plot(H_range, percentage_error, color='firebrick')
 plt.xticks(H_range, xticks)
 plt.xlabel(r'$H (10^4)$')
 plt.ylabel('Percentage')
 plt.title('Percentage Error Plot')
-plt.show()
+plt.tight_layout()
+plt.savefig('./wavespeed/Perc_error_exp1.png')

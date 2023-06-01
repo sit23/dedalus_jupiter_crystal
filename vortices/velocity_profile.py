@@ -16,15 +16,16 @@ rm_north = 1000
 rm_south = 1200
 
 # maximum velocity of vortex (m/s)
-vm = 80
+vm_north = 75
+vm_south = 80
 
 
 # Set up profile
 #----------------------------------------------------------------------------------------------
 
 # range of radius for each pole
-r_north = np.arange(0, 6*rm_north)
-r_south = np.arange(-6*rm_north, 0)
+r_north = np.arange(0, 5*rm_north)
+r_south = np.arange(-5*rm_north, 0)
 
 
 # Velocity profile
@@ -39,8 +40,8 @@ v_south = []
 
 for b in bb:
 
-    vn = vm * ( r_north / rm_north ) * np.exp( (1/b) * ( 1 - ( r_north/rm_north )**b ) )
-    vs = vm * ( r_south / -rm_south ) * np.exp( (1/b) * ( 1 - ( r_south/-rm_south )**b ) )
+    vn = vm_north * ( r_north / rm_north ) * np.exp( (1/b) * ( 1 - ( r_north/rm_north )**b ) )
+    vs = vm_south * ( r_south / -rm_south ) * np.exp( (1/b) * ( 1 - ( r_south/-rm_south )**b ) )
 
     v_north.append(vn)
     v_south.append(vs)
@@ -64,4 +65,4 @@ plt.legend()
 plt.xlabel('Distance (km)')
 plt.ylabel('Velocity (m/s)')
 plt.title('Velocity profile for varying steepness')
-plt.show()
+plt.savefig('./vortices/velocity_profile.png')

@@ -2,7 +2,7 @@
 
 To run and plot using e.g. 4 processes:
     $ mpiexec -n 4 python3 ./vortices/south_vortices.py
-    $ mpiexec -n 4 python3 ./vortices/plot_vortex.py snapshots/*.h5
+    $ mpiexec -n 4 python3 ./vortices/plot_vortex.py ./vortices/vortex_snapshots/*.h5 --output ./vortices/vortex_frames
     $ mpiexec -n 4 python3 ded_to_xarray.py
 
 
@@ -86,7 +86,7 @@ vm = 80 * meter / second                             # maximum velocity of vorte
 south_lat = [88.6, 83.7, 84.3, 85.0, 84.1, 83.2]
 south_long = [211.3, 157.1, 94.3, 13.4, 298.8, 229.7]
 
-# Define conversion function
+# Convert longitude and latitude inputs into x,y coordinates
 def conversion(lat, lon):
     lat, lon = np.deg2rad(lat), np.deg2rad(lon)
     x = R * np.cos(lat) * np.cos(lon)
@@ -100,24 +100,8 @@ for i in range(len(south_lat)):
 
     # Overide u,v components in velocity field
     u['g'][0] += vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (y-yy[i]) / ( r + 1e-16 ) )
-    u['g'][1] += - vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (x-xx[i]) / ( r + 1e-16 ) )
+    u['g'][1] += - vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (x-xx[i]) / ( r + 1e-16 ) )                          
 
-
-
-# Potential vorticity
-#---------------------
-
-ff = 2 * Omega * np.cos(np.sqrt((x)**2. + (y)**2) / R)                      # Coriolis
-zeta = -d3.div(d3.skew(u))                          
-Ro = 0.2
-Bu = 1
-
-phi0 = Bu * (ff*rm)**2
-gamma = scipy.special.gammainc(2/b, (1/b) * (r/rm)**b)
-term = 1 - (Ro/Bu) * np.exp(1/b) * b**( (2/b) - 1) * gamma
-
-phi = dist.Field(name='phi', bases=(xbasis, ybasis))
-phi['g'] = phi0 * term 
 
 
 # Initial condition: height
@@ -132,7 +116,7 @@ solver.solve()
 
 # Initial condition: perturbation
 #---------------------------------
-# h['g'] = H*0.01*np.exp(-((x)**2 + y**2)*100.)
+# h['g'] = H*0.01*np.exp(-((x)**2 + y**2)*100.) rand.rand
 
 
 #--------------------------------------------------------------------------------------------
@@ -157,8 +141,8 @@ snapshots = solver.evaluator.add_file_handler('./vortices/vortex_snapshots', sim
 
 # add velocity field
 snapshots.add_task(h, name='height')
-snapshots.add_task(zeta, name='vorticity')
-snapshots.add_task((zeta + 2*Omega*coscolat) / phi, name='PV')
+snapshots.add_task(-d3.div(d3.skew(u)), name='vorticity')
+snapshots.add_task((-d3.div(d3.skew(u)) + 2*Omega*coscolat) / h, name='PV')
 
 snapshots.add_task(d3.dot(u,ex), name='u')
 snapshots.add_task(d3.dot(u,ey), name='v')
