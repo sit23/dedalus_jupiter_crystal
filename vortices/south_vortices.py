@@ -36,7 +36,7 @@ second = hour / 3600
 Lx, Lz = 1, 1
 Nx, Nz = 128, 128
 dealias = 3/2                   
-stop_sim_time = 500
+stop_sim_time = 20
 timestepper = d3.RK222
 max_timestep = 1e-2
 dtype = np.float64
@@ -78,14 +78,33 @@ coscolat['g'] = np.cos(np.sqrt((x)**2. + (y)**2) / R)
 
 # INITIAL CONDITIONS
 
+# Independent variables
+#-----------------------
 
-# Initial condition: vortex
-#---------------------------
+# Steepness parameter
+b = 1.5
 
-# Parameters
-b = 1.5                                              # steepness parameter             
+# Rossby Number
+Ro = 0.2
+
+# Burger Number
+Bu = 1
+
+
+# Dependent variables
+#---------------------
+
+# Calculate max speed with Rossby Number
+f0 = 2 * Omega                                       # Planetary vorticity
 rm = 1e6 * meter                                     # Radius of vortex (km)
-vm = 80 * meter / second                             # maximum velocity of vortex
+vm = Ro * f0 * rm                                    # Calculate speed with Ro
+
+# Calculate deformation radius with Burger number
+phi = g * (h + H)
+
+
+# Initial condition: south pole vortices
+#----------------------------------------
 
 # South pole coordinates
 south_lat = [88.6, 83.7, 84.3, 85.0, 84.1, 83.2]
@@ -104,8 +123,8 @@ for i in range(len(south_lat)):
     r = np.sqrt( (x-xx[i])**2 + (y-yy[i])**2 )
 
     # Overide u,v components in velocity field
-    u['g'][0] += vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (y-yy[i]) / ( r + 1e-16 ) )
-    u['g'][1] += - vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (x-xx[i]) / ( r + 1e-16 ) )                          
+    u['g'][0] += - vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (y-yy[i]) / ( r + 1e-16 ) )
+    u['g'][1] += vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (x-xx[i]) / ( r + 1e-16 ) )                          
 
 
 
@@ -121,11 +140,7 @@ solver.solve()
 
 # Initial condition: perturbation
 #---------------------------------
-# h.fill_random('g')
-
-# pdb.set_trace()
-
-h['g'] = ( np.random.rand(h['g'].shape[0], h['g'].shape[1]) - 0.5 ) * 1.5e-5
+h['g'] += ( np.random.rand(h['g'].shape[0], h['g'].shape[1]) - 0.5 ) * 1e-5
 
 
 #--------------------------------------------------------------------------------------------

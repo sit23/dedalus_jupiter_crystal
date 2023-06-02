@@ -12,7 +12,7 @@ To make FFmpeg video:
 
 mpiexec -n 4 python3 ./reproduce/merge/south_merge.py &&
 mpiexec -n 4 python3 ./reproduce/merge/plot_merge.py ./reproduce/merge/merge_snapshots/*.h5 --output ./reproduce/merge/merge_frames &&
-ffmpeg -r 40 -i ./reproduce/merge/merge_frames/write_%06d.png ./reproduce/merge/z_merge.mp4
+ffmpeg -r 20 -i ./reproduce/merge/merge_frames/write_%06d.png ./reproduce/merge/z_merge.mp4
 
 """
 
@@ -36,7 +36,7 @@ second = hour / 3600
 Lx, Lz = 1, 1
 Nx, Nz = 128, 128
 dealias = 3/2                   
-stop_sim_time = 100
+stop_sim_time = 20
 timestepper = d3.RK222
 max_timestep = 1e-2
 dtype = np.float64
@@ -82,10 +82,7 @@ coscolat['g'] = np.cos(np.sqrt((x)**2. + (y)**2) / R)
 #-----------------------
 
 # Steepness parameter
-b = 0.5
-
-# Initial colatitude --- Don't need?? Because of coscolatiude field?
-theta = 0
+b = 1.5
 
 # Rossby Number
 Ro = 0.2
@@ -98,14 +95,12 @@ Bu = 1
 #---------------------
 
 # Calculate max speed with Rossby Number
-f = 2 * Omega                                        # Planetary vorticity
+f0 = 2 * Omega                                       # Planetary vorticity
 rm = 1e6 * meter                                     # Radius of vortex (km)
-vm = Ro * f * rm                                     # Calculate speed with Ro
+vm = Ro * f0 * rm                                    # Calculate speed with Ro
 
 # Calculate deformation radius with Burger number
-
-
-
+phi = 1
 
 
 # Initial condition: south pole vortices
@@ -128,8 +123,8 @@ for i in range(len(south_lat)):
     r = np.sqrt( (x-xx[i])**2 + (y-yy[i])**2 )
 
     # Overide u,v components in velocity field
-    u['g'][0] += vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (y-yy[i]) / ( r + 1e-16 ) )
-    u['g'][1] += - vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (x-xx[i]) / ( r + 1e-16 ) )                          
+    u['g'][0] += - vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (y-yy[i]) / ( r + 1e-16 ) )
+    u['g'][1] += vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (x-xx[i]) / ( r + 1e-16 ) )                          
 
 
 
@@ -145,11 +140,7 @@ solver.solve()
 
 # Initial condition: perturbation
 #---------------------------------
-# h.fill_random('g')
-
-# pdb.set_trace()
-
-h['g'] = ( np.random.rand(h['g'].shape[0], h['g'].shape[1]) - 0.5 ) * 1e-5
+h['g'] += ( np.random.rand(h['g'].shape[0], h['g'].shape[1]) - 0.5 ) * 1e-6
 
 
 #-----------------------------------------------------------------------------------------------------------------
@@ -161,7 +152,6 @@ h['g'] = ( np.random.rand(h['g'].shape[0], h['g'].shape[1]) - 0.5 ) * 1e-5
 problem = d3.IVP([u, h], namespace=locals())
 problem.add_equation("dt(u) + nu*lap(lap(u)) + g*grad(h)  = - u@grad(u) - 2*Omega*coscolat*zcross(u)")
 problem.add_equation("dt(h) + nu*lap(lap(h)) + H*div(u) = - div(h*u)")
-# problem.add_equation("integ(h) = 0")
 solver = problem.build_solver(timestepper)
 solver.stop_sim_time = stop_sim_time 
 
