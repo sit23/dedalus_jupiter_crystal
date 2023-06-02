@@ -49,7 +49,7 @@ g = 24.79 * meter / second**2
 H = 5e4 * meter                 
 
 
-#--------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------
 
 # Dedalus set ups
 #-----------------
@@ -74,18 +74,39 @@ zcross = lambda A: d3.skew(A)
 coscolat = dist.Field(name='coscolat', bases=(xbasis, ybasis))
 coscolat['g'] = np.cos(np.sqrt((x)**2. + (y)**2) / R)
 
-#--------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------
 
 # INITIAL CONDITIONS
 
+# Independent variables
+#-----------------------
 
-# Initial condition: vortex
-#---------------------------
+# Steepness parameter
+b = 1.5
 
-# Parameters
-b = 0.5                                              # steepness parameter             
+# Initial colatitude --- Don't need?? Because of coscolatiude field?
+theta = 0
+
+# Rossby Number
+Ro = 0.2
+
+# Burger Number
+Bu = 1
+
+
+# Dependent variables
+#---------------------
+
+# Calculate max speed with Rossby Number
+f = 2 * Omega                                        # Planetary vorticity
 rm = 1e6 * meter                                     # Radius of vortex (km)
-vm = 80 * meter / second                             # maximum velocity of vortex
+vm = Ro * f * rm                                     # Calculate speed with Ro
+
+
+
+
+# Initial condition: south pole vortices
+#----------------------------------------
 
 # South pole coordinates
 south_lat = [88.6, 83.7, 84.3, 85.0, 84.1, 83.2]
@@ -125,10 +146,10 @@ solver.solve()
 
 # pdb.set_trace()
 
-h['g'] = ( np.random.rand(h['g'].shape[0], h['g'].shape[1]) - 0.5 ) * 1.5e-5
+h['g'] = ( np.random.rand(h['g'].shape[0], h['g'].shape[1]) - 0.5 ) * 1e-5
 
 
-#--------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------
 
 # Problem and Solver
 #--------------------
@@ -157,7 +178,7 @@ snapshots.add_task(d3.dot(u,ex), name='u')
 snapshots.add_task(d3.dot(u,ey), name='v')
 snapshots.add_task(np.sqrt(d3.dot(u,ex)**2 + d3.dot(u,ey)**2), name='vortex')
 
-#--------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------
 
 # CFL
 CFL = d3.CFL(solver, initial_dt=max_timestep, cadence=10, safety=0.2, threshold=0.1,
