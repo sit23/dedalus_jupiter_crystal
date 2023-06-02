@@ -82,7 +82,7 @@ coscolat['g'] = np.cos(np.sqrt((x)**2. + (y)**2) / R)
 #-----------------------
 
 # Steepness parameter
-b = 1.5
+b = 0.5
 
 # Initial colatitude --- Don't need?? Because of coscolatiude field?
 theta = 0
@@ -101,6 +101,9 @@ Bu = 1
 f = 2 * Omega                                        # Planetary vorticity
 rm = 1e6 * meter                                     # Radius of vortex (km)
 vm = Ro * f * rm                                     # Calculate speed with Ro
+
+# Calculate deformation radius with Burger number
+
 
 
 
