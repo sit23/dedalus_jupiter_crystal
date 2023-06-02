@@ -12,7 +12,7 @@ To make FFmpeg video:
 
 mpiexec -n 4 python3 ./reproduce/merge/south_merge.py &&
 mpiexec -n 4 python3 ./reproduce/merge/plot_merge.py ./reproduce/merge/merge_snapshots/*.h5 --output ./reproduce/merge/merge_frames &&
-ffmpeg -r 20 -i ./reproduce/merge/merge_frames/write_%06d.png ./reproduce/merge/z_merge.mp4
+ffmpeg -r 40 -i ./reproduce/merge/merge_frames/write_%06d.png ./reproduce/merge/z_merge.mp4
 
 """
 
@@ -34,7 +34,7 @@ second = hour / 3600
 
 # Numerical Parameters
 Lx, Lz = 1, 1
-Nx, Nz = 128, 128
+Nx, Nz = 512, 512
 dealias = 3/2                   
 stop_sim_time = 20
 timestepper = d3.RK222
@@ -160,7 +160,7 @@ solver.stop_sim_time = stop_sim_time
 #-----------
 
 # Set up and save snapshots
-snapshots = solver.evaluator.add_file_handler('./reproduce/merge/merge_snapshots', sim_dt=0.1, max_writes=10)
+snapshots = solver.evaluator.add_file_handler('./reproduce/merge/merge_snapshots', sim_dt=1, max_writes=10)
 
 # add velocity field
 snapshots.add_task(h, name='height')
