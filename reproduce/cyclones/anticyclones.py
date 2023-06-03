@@ -5,6 +5,10 @@ mpiexec -n 4 python3 ./reproduce/cyclones/anticyclones.py &&
 mpiexec -n 4 python3 ./reproduce/cyclones/plot_anticyclones.py ./reproduce/cyclones/anticyclones_snapshots/*.h5 --output ./reproduce/cyclones/anticyclones_frames &&
 ffmpeg -r 50 -i ./reproduce/cyclones/anticyclones_frames/write_%06d.png ./reproduce/cyclones/z_anticyclones.mp4
 
+
+Stitching two mp4s together:
+    - ffmpeg -i ./reproduce/cyclones/z_cyclones1.mp4 -i ./reproduce/cyclones/z_anticyclones1.mp4 -filter_complex hstack ./reproduce/cyclones/all_cyclones.mp4
+
 """
 
 
@@ -32,9 +36,9 @@ max_timestep = 1e-2
 dtype = np.float64
 
 # Length of simulation
-days = 20
+days = 40
 stop_sim_time = 24 * days
-printout = 0.5
+printout = 1
 
 # Planetary Configurations
 R = 69.911e6 * meter           
@@ -104,8 +108,8 @@ a = 0.25
 r = np.sqrt((x-a)**2 + (y-a)**2)                     # radius
 
 # Overide u,v components in velocity field
-u['g'][0] = - vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (y-a) / ( r + 1e-16 ) )
-u['g'][1] = vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (x-a) / ( r + 1e-16 ) )                         
+u['g'][0] = vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (y-a) / ( r + 1e-16 ) )
+u['g'][1] = - vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (x-a) / ( r + 1e-16 ) )                         
 
 
 

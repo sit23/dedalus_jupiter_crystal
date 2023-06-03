@@ -32,9 +32,9 @@ max_timestep = 1e-2
 dtype = np.float64
 
 # Length of simulation
-days = 20
+days = 40
 stop_sim_time = 24 * days
-printout = 0.5
+printout = 1
 
 # Planetary Configurations
 R = 69.911e6 * meter           
@@ -105,8 +105,8 @@ a = 0.25
 r = np.sqrt((x-a)**2 + (y-a)**2)                     # radius
 
 # Overide u,v components in velocity field
-u['g'][0] = vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (y-a) / ( r + 1e-16 ) )
-u['g'][1] = - vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (x-a) / ( r + 1e-16 ) )                         
+u['g'][0] = - vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (y-a) / ( r + 1e-16 ) )
+u['g'][1] = vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (x-a) / ( r + 1e-16 ) )                         
 
 
 
