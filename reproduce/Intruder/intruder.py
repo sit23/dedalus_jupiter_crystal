@@ -1,9 +1,9 @@
 """
 
-python3 ./reproduce/merge/delete_merge.py &&
-mpiexec -n 4 python3 ./reproduce/merge/merge.py &&
-mpiexec -n 4 python3 ./reproduce/merge/plot_merge.py ./reproduce/merge/merge_snapshots/*.h5 --output ./reproduce/merge/merge_frames &&
-ffmpeg -r 50 -i ./reproduce/merge/merge_frames/write_%06d.png ./reproduce/merge/z_merge.mp4
+python3 ./reproduce/intruder/delete_intruder.py &&
+mpiexec -n 4 python3 ./reproduce/intruder/intruder.py &&
+mpiexec -n 4 python3 ./reproduce/intruder/plot_intruder.py ./reproduce/intruder/intruder_snapshots/*.h5 --output ./reproduce/intruder/intruder_frames &&
+ffmpeg -r 50 -i ./reproduce/intruder/intruder_frames/write_%06d.png ./reproduce/intruder/z_intruder.mp4
 
 """
 
@@ -157,7 +157,7 @@ solver.stop_sim_time = stop_sim_time
 #-----------
 
 # Set up and save snapshots
-snapshots = solver.evaluator.add_file_handler('./reproduce/merge/merge_snapshots', sim_dt=printout, max_writes=10)
+snapshots = solver.evaluator.add_file_handler('./reproduce/intruder/intruder_snapshots', sim_dt=printout, max_writes=10)
 
 # add velocity field
 snapshots.add_task(h, name='height')
