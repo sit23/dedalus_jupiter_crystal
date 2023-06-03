@@ -34,9 +34,10 @@ second = hour / 3600
 
 # Numerical Parameters
 Lx, Lz = 1, 1
-Nx, Nz = 512, 512
+Nx, Nz = 128, 128
 dealias = 3/2                   
 stop_sim_time = 20
+printout = 0.1
 timestepper = d3.RK222
 max_timestep = 1e-2
 dtype = np.float64
@@ -45,8 +46,7 @@ dtype = np.float64
 R = 69.911e6 * meter           
 Omega = 1.76e-4 / second            
 nu = 1e5 * meter**2 / second / 32**2   
-g = 24.79 * meter / second**2      
-H = 5e4 * meter                 
+g = 24.79 * meter / second**2              
 
 
 #-----------------------------------------------------------------------------------------------------------------
@@ -87,9 +87,6 @@ b = 1.5
 # Rossby Number
 Ro = 0.2
 
-# Burger Number
-Bu = 1
-
 
 # Dependent variables
 #---------------------
@@ -100,7 +97,11 @@ rm = 1e6 * meter                                     # Radius of vortex (km)
 vm = Ro * f0 * rm                                    # Calculate speed with Ro
 
 # Calculate deformation radius with Burger number
-phi = 1
+H = 5e4 * meter
+phi = g * (h + H)
+
+# Burger Number -- Currently Bu ~ 10
+# Bu = phi / (f0 * rm)**2 
 
 
 # Initial condition: south pole vortices
@@ -140,7 +141,7 @@ solver.solve()
 
 # Initial condition: perturbation
 #---------------------------------
-h['g'] += ( np.random.rand(h['g'].shape[0], h['g'].shape[1]) - 0.5 ) * 1e-6
+h['g'] += ( np.random.rand(h['g'].shape[0], h['g'].shape[1]) - 0.5 ) * 1e-5
 
 
 #-----------------------------------------------------------------------------------------------------------------
@@ -160,12 +161,12 @@ solver.stop_sim_time = stop_sim_time
 #-----------
 
 # Set up and save snapshots
-snapshots = solver.evaluator.add_file_handler('./reproduce/merge/merge_snapshots', sim_dt=1, max_writes=10)
+snapshots = solver.evaluator.add_file_handler('./reproduce/merge/merge_snapshots', sim_dt=printout, max_writes=10)
 
 # add velocity field
 snapshots.add_task(h, name='height')
 snapshots.add_task(-d3.div(d3.skew(u)), name='vorticity')
-snapshots.add_task((-d3.div(d3.skew(u)) + 2*Omega*coscolat) / (h+H), name='PV')
+snapshots.add_task((-d3.div(d3.skew(u)) + 2*Omega*coscolat) / phi, name='PV')
 
 snapshots.add_task(d3.dot(u,ex), name='u')
 snapshots.add_task(d3.dot(u,ey), name='v')

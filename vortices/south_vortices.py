@@ -37,6 +37,7 @@ Lx, Lz = 1, 1
 Nx, Nz = 128, 128
 dealias = 3/2                   
 stop_sim_time = 20
+printout = 0.1
 timestepper = d3.RK222
 max_timestep = 1e-2
 dtype = np.float64
@@ -45,11 +46,10 @@ dtype = np.float64
 R = 69.911e6 * meter           
 Omega = 1.76e-4 / second            
 nu = 1e5 * meter**2 / second / 32**2   
-g = 24.79 * meter / second**2      
-H = 5e4 * meter                 
+g = 24.79 * meter / second**2
 
 
-#--------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------
 
 # Dedalus set ups
 #-----------------
@@ -74,7 +74,7 @@ zcross = lambda A: d3.skew(A)
 coscolat = dist.Field(name='coscolat', bases=(xbasis, ybasis))
 coscolat['g'] = np.cos(np.sqrt((x)**2. + (y)**2) / R)
 
-#--------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------
 
 # INITIAL CONDITIONS
 
@@ -87,9 +87,6 @@ b = 1.5
 # Rossby Number
 Ro = 0.2
 
-# Burger Number
-Bu = 1
-
 
 # Dependent variables
 #---------------------
@@ -100,7 +97,11 @@ rm = 1e6 * meter                                     # Radius of vortex (km)
 vm = Ro * f0 * rm                                    # Calculate speed with Ro
 
 # Calculate deformation radius with Burger number
+H = 5e4 * meter
 phi = g * (h + H)
+
+# Burger Number -- Currently Bu ~ 10
+# Bu = phi / (f0 * rm)**2 
 
 
 # Initial condition: south pole vortices
@@ -143,7 +144,7 @@ solver.solve()
 h['g'] += ( np.random.rand(h['g'].shape[0], h['g'].shape[1]) - 0.5 ) * 1e-5
 
 
-#--------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------
 
 # Problem and Solver
 #--------------------
@@ -161,18 +162,18 @@ solver.stop_sim_time = stop_sim_time
 #-----------
 
 # Set up and save snapshots
-snapshots = solver.evaluator.add_file_handler('./vortices/vortex_snapshots', sim_dt=0.1, max_writes=10)
+snapshots = solver.evaluator.add_file_handler('./vortices/vortex_snapshots', sim_dt=printout, max_writes=10)
 
 # add velocity field
 snapshots.add_task(h, name='height')
 snapshots.add_task(-d3.div(d3.skew(u)), name='vorticity')
-snapshots.add_task((-d3.div(d3.skew(u)) + 2*Omega*coscolat) / (h+H), name='PV')
+snapshots.add_task((-d3.div(d3.skew(u)) + 2*Omega*coscolat) / phi, name='PV')
 
 snapshots.add_task(d3.dot(u,ex), name='u')
 snapshots.add_task(d3.dot(u,ey), name='v')
 snapshots.add_task(np.sqrt(d3.dot(u,ex)**2 + d3.dot(u,ey)**2), name='vortex')
 
-#--------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------
 
 # CFL
 CFL = d3.CFL(solver, initial_dt=max_timestep, cadence=10, safety=0.2, threshold=0.1,
