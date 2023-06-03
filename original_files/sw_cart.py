@@ -11,13 +11,12 @@ Plans:
 * Adapt parameters to Jupiter as per their paper, and maybe think about implementing the boundary drag.
 * Should shrink domain so that it's the size of their domain - our's is almost certainly too big at this stage.
 
-To run and plot using e.g. 4 processes: ******REMEMBER TO SAVE******
-    $ mpiexec -n 4 python3 sw_cart.py
-    $ mpiexec -n 4 python3 plot_snapshots.py snapshots/*.h5
-    $ mpiexec -n 4 python3 ded_to_xarray.py
 
-To make FFmpeg video:
-    ffmpeg -r 10 -i frames/write_%06d.png vortex.mp4
+
+mpiexec -n 4 python3 ./original_files/sw_cart.py &&
+mpiexec -n 4 python3 ./original_files/plot_snapshots.py ./original_files/snapshots/*.h5 --output ./original_files/frames &&
+ffmpeg -r 20 -i ./original_files/frames/write_%06d.png ./original_files/z_sw_cart.mp4
+
 """
 
 import numpy as np
@@ -97,7 +96,7 @@ hh = H + h
 
 
 # Analysis
-snapshots = solver.evaluator.add_file_handler('snapshots', sim_dt=0.1, max_writes=10)
+snapshots = solver.evaluator.add_file_handler('./original_files/snapshots', sim_dt=0.1, max_writes=10)
 
 
 #Add full fields - vorticity, height, PV and planetary vorticity

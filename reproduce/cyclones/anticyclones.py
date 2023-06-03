@@ -41,7 +41,7 @@ max_timestep = 1e-2
 dtype = np.float64
 
 # Length of simulation
-days = 2
+days = 5
 stop_sim_time = 24 * days
 printout = 0.1
 
@@ -106,28 +106,15 @@ phi = g * (h + H)
 # Bu = phi / (f0 * rm)**2 
 
 
-# Initial condition: south pole vortices
-#----------------------------------------
+# Initial condition: off-centre anticyclone
+#-------------------------------------------
 
-# South pole coordinates
-south_lat = [88.6, 83.7, 84.3, 85.0, 84.1, 83.2]
-south_long = [211.3, 157.1, 94.3, 13.4, 298.8, 229.7]
+a = 0.25
+r = np.sqrt((x-a)**2 + (y-a)**2)                     # radius
 
-# Convert longitude and latitude inputs into x,y coordinates
-def conversion(lat, lon):
-    lat, lon = np.deg2rad(lat), np.deg2rad(lon)
-    x = R * np.cos(lat) * np.cos(lon)
-    y = R * np.cos(lat) * np.sin(lon)
-    return x, y
-
-for i in range(len(south_lat)):
-
-    xx,yy = conversion(south_lat, south_long)
-    r = np.sqrt( (x-xx[i])**2 + (y-yy[i])**2 )
-
-    # Overide u,v components in velocity field
-    u['g'][0] += - vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (y-yy[i]) / ( r + 1e-16 ) )
-    u['g'][1] += vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (x-xx[i]) / ( r + 1e-16 ) )                          
+# Overide u,v components in velocity field
+u['g'][0] = - vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (y-a) / ( r + 1e-16 ) )
+u['g'][1] = vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (x-a) / ( r + 1e-16 ) )                         
 
 
 

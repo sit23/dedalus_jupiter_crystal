@@ -1,18 +1,8 @@
 """
 
-To run and plot using e.g. 4 processes:
-    $ mpiexec -n 4 python3 ./vortices/south_vortices.py
-    $ mpiexec -n 4 python3 ./vortices/plot_vortex.py ./vortices/vortex_snapshots/*.h5 --output ./vortices/vortex_frames
-    $ mpiexec -n 4 python3 ded_to_xarray.py
-
-
-To make FFmpeg video:
-    $ ffmpeg -r 10 -i ./vortices/vortex_frames/write_%06d.png ./vortices/z_vortex.mp4
-
-
 mpiexec -n 4 python3 ./reproduce/cyclones/cyclones.py &&
 mpiexec -n 4 python3 ./reproduce/cyclones/plot_cyclones.py ./reproduce/cyclones/cyclones_snapshots/*.h5 --output ./reproduce/cyclones/cyclones_frames &&
-ffmpeg -r 40 -i ./reproduce/cyclones/cyclones_frames/write_%06d.png ./reproduce/cyclones/z_cyclones.mp4
+ffmpeg -r 50 -i ./reproduce/cyclones/cyclones_frames/write_%06d.png ./reproduce/cyclones/z_cyclones.mp4
 
 """
 
@@ -41,9 +31,9 @@ max_timestep = 1e-2
 dtype = np.float64
 
 # Length of simulation
-days = 2
+days = 10
 stop_sim_time = 24 * days
-printout = 0.1
+printout = 0.5
 
 # Planetary Configurations
 R = 69.911e6 * meter           
@@ -107,28 +97,15 @@ phi = g * (h + H)
 # pdb.set_trace()
 
 
-# Initial condition: south pole vortices
-#----------------------------------------
+# Initial condition: off-centre cyclone
+#---------------------------------------
 
-# South pole coordinates
-south_lat = [88.6, 83.7, 84.3, 85.0, 84.1, 83.2]
-south_long = [211.3, 157.1, 94.3, 13.4, 298.8, 229.7]
+a = 0.25
+r = np.sqrt((x-a)**2 + (y-a)**2)                     # radius
 
-# Convert longitude and latitude inputs into x,y coordinates
-def conversion(lat, lon):
-    lat, lon = np.deg2rad(lat), np.deg2rad(lon)
-    x = R * np.cos(lat) * np.cos(lon)
-    y = R * np.cos(lat) * np.sin(lon)
-    return x, y
-
-for i in range(len(south_lat)):
-
-    xx,yy = conversion(south_lat, south_long)
-    r = np.sqrt( (x-xx[i])**2 + (y-yy[i])**2 )
-
-    # Overide u,v components in velocity field
-    u['g'][0] += - vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (y-yy[i]) / ( r + 1e-16 ) )
-    u['g'][1] += vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (x-xx[i]) / ( r + 1e-16 ) )                          
+# Overide u,v components in velocity field
+u['g'][0] = vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (y-a) / ( r + 1e-16 ) )
+u['g'][1] = - vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (x-a) / ( r + 1e-16 ) )                         
 
 
 

@@ -53,7 +53,7 @@ def main(filename, start, count, output):
     plt.close(fig)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__": 
 
     import pathlib
     from dedalus.tools import logging

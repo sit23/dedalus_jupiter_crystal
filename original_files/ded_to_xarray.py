@@ -1,9 +1,16 @@
+"""
+
+mpiexec -n 4 python3 ./original_files/ded_to_xarray.py
+
+"""
+
+
 import xarray as xar
 import dedalus.public as d3
 import matplotlib.pyplot as plt
 
 #Load the individual dedalus snapshots into xarray DataAarrays using dedalus' inbuilt 'load_tasks_to_xarray'.
-task_list = [d3.load_tasks_to_xarray(f"snapshots/snapshots_s{snap_num+1}.h5") for snap_num in range(10)]
+task_list = [d3.load_tasks_to_xarray(f"./original_files/snapshots/snapshots_s{snap_num+1}.h5") for snap_num in range(10)]
 
 #Create a list of variable names that are stored in these files
 list_var_names = [key for key in task_list[0].keys()]
