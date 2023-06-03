@@ -1,5 +1,6 @@
 """
 
+python3 ./reproduce/cyclones/delete_cyclones.py &&
 mpiexec -n 4 python3 ./reproduce/cyclones/cyclones.py &&
 mpiexec -n 4 python3 ./reproduce/cyclones/plot_cyclones.py ./reproduce/cyclones/cyclones_snapshots/*.h5 --output ./reproduce/cyclones/cyclones_frames &&
 ffmpeg -r 50 -i ./reproduce/cyclones/cyclones_frames/write_%06d.png ./reproduce/cyclones/z_cyclones.mp4
@@ -31,7 +32,7 @@ max_timestep = 1e-2
 dtype = np.float64
 
 # Length of simulation
-days = 10
+days = 1
 stop_sim_time = 24 * days
 printout = 0.5
 

@@ -61,9 +61,9 @@ def main(filename, start, count, output):
             fig.suptitle(title, x=0.45, y=title_height, ha='left')
 
             # Add cyclone title
-            cyclone = 'Cyclone in Northern Hemisphere'
-            title_height = 1 * mfig.margin.top / mfig.fig.y
-            fig.suptitle(cyclone, x=0.5, y=title_height, ha='middle') 
+            anticyclone = 'Anti-cyclone in NH'
+            title_height = 1 - 0.5 * mfig.margin.top / mfig.fig.y
+            fig.suptitle(anticyclone, x=0.5, y=title_height, ha='center') 
 
             # Save figure
             savename = savename_func(file['scales/write_number'][index])

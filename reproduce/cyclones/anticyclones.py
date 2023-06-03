@@ -1,17 +1,8 @@
 """
 
-To run and plot using e.g. 4 processes:
-    $ mpiexec -n 4 python3 ./vortices/south_vortices.py
-    $ mpiexec -n 4 python3 ./vortices/plot_vortex.py ./vortices/vortex_snapshots/*.h5 --output ./vortices/vortex_frames
-    $ mpiexec -n 4 python3 ded_to_xarray.py
-
-
-To make FFmpeg video:
-    $ ffmpeg -r 10 -i ./vortices/vortex_frames/write_%06d.png ./vortices/z_vortex.mp4
-
-
+python3 ./reproduce/cyclones/delete_anticyclones.py &&
 mpiexec -n 4 python3 ./reproduce/cyclones/anticyclones.py &&
-mpiexec -n 4 python3 ./reproduce/cyclones/plot_cyclones.py ./reproduce/cyclones/anticyclones_snapshots/*.h5 --output ./reproduce/cyclones/anticyclones_frames &&
+mpiexec -n 4 python3 ./reproduce/cyclones/plot_anticyclones.py ./reproduce/cyclones/anticyclones_snapshots/*.h5 --output ./reproduce/cyclones/anticyclones_frames &&
 ffmpeg -r 50 -i ./reproduce/cyclones/anticyclones_frames/write_%06d.png ./reproduce/cyclones/z_anticyclones.mp4
 
 """
@@ -41,7 +32,7 @@ max_timestep = 1e-2
 dtype = np.float64
 
 # Length of simulation
-days = 20
+days = 10
 stop_sim_time = 24 * days
 printout = 0.5
 
