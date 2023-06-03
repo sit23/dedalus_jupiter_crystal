@@ -25,7 +25,7 @@ second = hour / 3600
 
 # Numerical Parameters
 Lx, Lz = 1, 1
-Nx, Nz = 128, 128
+Nx, Nz = 512, 512
 dealias = 3/2                   
 timestepper = d3.RK222
 max_timestep = 1e-2
@@ -35,12 +35,12 @@ dtype = np.float64
 days = 100
 stop_sim_time = 24 * days
 printout = 1
-
+ 
 # Planetary Configurations
 R = 69.911e6 * meter           
 Omega = 1.76e-4 / second            
 nu = 1e5 * meter**2 / second / 32**2   
-g = 24.79 * meter / second**2              
+g = 24.79 * meter / second**2
 
 
 #-----------------------------------------------------------------------------------------------------------------
@@ -76,7 +76,7 @@ coscolat['g'] = np.cos(np.sqrt((x)**2. + (y)**2) / R)
 #-----------------------
 
 # Steepness parameter
-b = 1
+b = 2
 
 # Rossby Number
 Ro = 0.2
@@ -91,7 +91,7 @@ rm = 1e6 * meter                                     # Radius of vortex (km)
 vm = Ro * f0 * rm                                    # Calculate speed with Ro
 
 # Calculate deformation radius with Burger number
-H = 5e3 * meter
+H = 5e4 * meter
 phi = g * (h + H)
 
 # Burger Number -- Currently Bu ~ 10
