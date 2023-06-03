@@ -12,7 +12,7 @@ To make FFmpeg video:
 
 mpiexec -n 4 python3 ./reproduce/cyclones/anticyclones.py &&
 mpiexec -n 4 python3 ./reproduce/cyclones/plot_cyclones.py ./reproduce/cyclones/anticyclones_snapshots/*.h5 --output ./reproduce/cyclones/anticyclones_frames &&
-ffmpeg -r 40 -i ./reproduce/cyclones/anticyclones_frames/write_%06d.png ./reproduce/cyclones/z_anticyclones.mp4
+ffmpeg -r 50 -i ./reproduce/cyclones/anticyclones_frames/write_%06d.png ./reproduce/cyclones/z_anticyclones.mp4
 
 """
 
@@ -41,9 +41,9 @@ max_timestep = 1e-2
 dtype = np.float64
 
 # Length of simulation
-days = 5
+days = 20
 stop_sim_time = 24 * days
-printout = 0.1
+printout = 0.5
 
 # Planetary Configurations
 R = 69.911e6 * meter           
