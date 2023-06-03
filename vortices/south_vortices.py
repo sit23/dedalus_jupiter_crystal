@@ -36,11 +36,14 @@ second = hour / 3600
 Lx, Lz = 1, 1
 Nx, Nz = 128, 128
 dealias = 3/2                   
-stop_sim_time = 20
-printout = 0.1
 timestepper = d3.RK222
 max_timestep = 1e-2
 dtype = np.float64
+
+# Length of simulation
+days = 2
+stop_sim_time = 24 * days
+printout = 0.1
 
 # Planetary Configurations
 R = 69.911e6 * meter           
@@ -92,7 +95,7 @@ Ro = 0.2
 #---------------------
 
 # Calculate max speed with Rossby Number
-f0 = 2 * Omega                                       # Planetary vorticity
+f0 = 2 * Omega                                       # Planetary vorticity -- slightly different to theirs
 rm = 1e6 * meter                                     # Radius of vortex (km)
 vm = Ro * f0 * rm                                    # Calculate speed with Ro
 
@@ -102,6 +105,7 @@ phi = g * (h + H)
 
 # Burger Number -- Currently Bu ~ 10
 # Bu = phi / (f0 * rm)**2 
+# pdb.set_trace()
 
 
 # Initial condition: south pole vortices

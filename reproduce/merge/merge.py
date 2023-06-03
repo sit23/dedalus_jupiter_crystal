@@ -1,18 +1,8 @@
 """
 
-To run and plot using e.g. 4 processes:
-    $ mpiexec -n 4 python3 ./vortices/south_vortices.py
-    $ mpiexec -n 4 python3 ./vortices/plot_vortex.py ./vortices/vortex_snapshots/*.h5 --output ./vortices/vortex_frames
-    $ mpiexec -n 4 python3 ded_to_xarray.py
-
-
-To make FFmpeg video:
-    $ ffmpeg -r 10 -i ./vortices/vortex_frames/write_%06d.png ./vortices/z_vortex.mp4
-
-
-mpiexec -n 4 python3 ./reproduce/merge/south_merge.py &&
+mpiexec -n 4 python3 ./reproduce/merge/merge.py &&
 mpiexec -n 4 python3 ./reproduce/merge/plot_merge.py ./reproduce/merge/merge_snapshots/*.h5 --output ./reproduce/merge/merge_frames &&
-ffmpeg -r 40 -i ./reproduce/merge/merge_frames/write_%06d.png ./reproduce/merge/z_merge.mp4
+ffmpeg -r 20 -i ./reproduce/merge/merge_frames/write_%06d.png ./reproduce/merge/z_merge.mp4
 
 """
 
@@ -36,11 +26,14 @@ second = hour / 3600
 Lx, Lz = 1, 1
 Nx, Nz = 128, 128
 dealias = 3/2                   
-stop_sim_time = 20
-printout = 0.1
 timestepper = d3.RK222
 max_timestep = 1e-2
 dtype = np.float64
+
+# Length of simulation
+days = 2
+stop_sim_time = 24 * days
+printout = 0.1
 
 # Planetary Configurations
 R = 69.911e6 * meter           

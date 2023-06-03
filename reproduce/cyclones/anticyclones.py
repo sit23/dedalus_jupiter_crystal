@@ -36,11 +36,14 @@ second = hour / 3600
 Lx, Lz = 1, 1
 Nx, Nz = 128, 128
 dealias = 3/2                   
-stop_sim_time = 20
-printout = 0.1
 timestepper = d3.RK222
 max_timestep = 1e-2
 dtype = np.float64
+
+# Length of simulation
+days = 2
+stop_sim_time = 24 * days
+printout = 0.1
 
 # Planetary Configurations
 R = 69.911e6 * meter           
