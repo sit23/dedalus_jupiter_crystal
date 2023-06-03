@@ -7,6 +7,12 @@ Usage:
 Options:
     --output=<dir>  Output directory [default: ./frames]
 
+
+python3 ./reproduce/cyclones/delete_cyclones.py &&
+mpiexec -n 4 python3 ./reproduce/cyclones/cyclones.py &&
+mpiexec -n 4 python3 ./reproduce/cyclones/plot_cyclones.py ./reproduce/cyclones/cyclones_snapshots/*.h5 --output ./reproduce/cyclones/cyclones_frames &&
+ffmpeg -r 50 -i ./reproduce/cyclones/cyclones_frames/write_%06d.png ./reproduce/cyclones/z_cyclones.mp4
+
 """
 
 import h5py
@@ -61,9 +67,9 @@ def main(filename, start, count, output):
             fig.suptitle(title, x=0.45, y=title_height, ha='left')
 
             # Add cyclone title
-            cyclone = 'Cyclone in Northern Hemisphere'
-            title_height = 1 * mfig.margin.top / mfig.fig.y
-            fig.suptitle(cyclone, x=0.5, y=title_height, ha='middle') 
+            cyclone = 'Cyclone in NH'
+            title_height = 1 - 0.5 * mfig.margin.top / mfig.fig.y
+            fig.suptitle(cyclone, x=0.5, y=title_height, ha='center') 
 
             # Save figure
             savename = savename_func(file['scales/write_number'][index])

@@ -7,6 +7,13 @@ Usage:
 Options:
     --output=<dir>  Output directory [default: ./frames]
 
+
+python3 ./reproduce/cyclones/delete_anticyclones.py &&
+mpiexec -n 4 python3 ./reproduce/cyclones/anticyclones.py &&
+mpiexec -n 4 python3 ./reproduce/cyclones/plot_anticyclones.py ./reproduce/cyclones/anticyclones_snapshots/*.h5 --output ./reproduce/cyclones/anticyclones_frames &&
+ffmpeg -r 50 -i ./reproduce/cyclones/anticyclones_frames/write_%06d.png ./reproduce/cyclones/z_anticyclones.mp4
+
+
 """
 
 import h5py

@@ -32,7 +32,7 @@ max_timestep = 1e-2
 dtype = np.float64
 
 # Length of simulation
-days = 1
+days = 20
 stop_sim_time = 24 * days
 printout = 0.5
 
