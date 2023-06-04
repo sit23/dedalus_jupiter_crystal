@@ -8,9 +8,10 @@ Options:
     --output=<dir>  Output directory [default: ./frames]
 
 
-mpiexec -n 4 python3 ./reproduce/merge/plot_merge.py ./reproduce/merge/merge_snapshots/*.h5 --output ./reproduce/merge/merge_frames
-
-ffmpeg -r 10 -i ./reproduce/merge/merge_frames/write_%06d.png ./reproduce/merge/z_merge.mp4
+python3 ./reproduce/merge/delete_merge.py &&
+mpiexec -n 4 python3 ./reproduce/merge/merge.py &&
+mpiexec -n 4 python3 ./reproduce/merge/plot_merge.py ./reproduce/merge/merge_snapshots/*.h5 --output ./reproduce/merge/merge_frames &&
+ffmpeg -r 50 -i ./reproduce/merge/merge_frames/write_%06d.png ./reproduce/merge/z_merge.mp4
 
 """
 
