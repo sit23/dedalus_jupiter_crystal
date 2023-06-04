@@ -76,7 +76,7 @@ coscolat['g'] = np.cos(np.sqrt((x)**2. + (y)**2) / R)
 #-----------------------
 
 # Steepness parameter
-b = 2
+b = 2.5
 
 # Rossby Number
 Ro = 0.2
