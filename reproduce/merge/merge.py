@@ -25,14 +25,14 @@ second = hour / 3600
 
 # Numerical Parameters
 Lx, Lz = 1, 1
-Nx, Nz = 512, 512
+Nx, Nz = 128, 128
 dealias = 3/2                   
 timestepper = d3.RK222
 max_timestep = 1e-2
 dtype = np.float64
 
 # Length of simulation
-days = 100
+days = 50
 stop_sim_time = 24 * days
 printout = 1
  
@@ -76,7 +76,7 @@ coscolat['g'] = np.cos(np.sqrt((x)**2. + (y)**2) / R)
 #-----------------------
 
 # Steepness parameter
-b = 2.5
+b = 1.5
 
 # Rossby Number
 Ro = 0.2
@@ -94,9 +94,9 @@ vm = Ro * f0 * rm                                    # Calculate speed with Ro
 H = 5e4 * meter
 phi = g * (h + H)
 
-# Burger Number -- Currently Bu ~ 10
-# phi0 = g*H
-# Bu = phi0 / (f0 * rm)**2 
+# Calculate Burger Number -- Currently Bu ~ 10
+phi0 = g*H
+Bu = phi0 / (f0 * rm)**2 
 # pdb.set_trace()
 
 
@@ -158,6 +158,8 @@ solver.stop_sim_time = stop_sim_time
 
 # Set up and save snapshots
 snapshots = solver.evaluator.add_file_handler('./reproduce/merge/merge_snapshots', sim_dt=printout, max_writes=10)
+
+# experiments/{}_{}d_Bu{}_b{}/merge_snapshots'.format(Nx, days, round(Bu), b)
 
 # add velocity field
 snapshots.add_task(h, name='height')
