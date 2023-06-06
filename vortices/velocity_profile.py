@@ -7,9 +7,7 @@ import pdb
 #----------------------------------------------------------------------------------------------
 
 # Steepness parameter
-b1 = 1
-b2 = 1.5
-b3 = 2
+bb = [1,1.5,2]
 
 # Radius of vortices at each pole (km)
 rm_north = 1000
@@ -24,15 +22,12 @@ vm_south = 80
 #----------------------------------------------------------------------------------------------
 
 # range of radius for each pole
-r_north = np.arange(0, 5*rm_north)
-r_south = np.arange(-5*rm_north, 0)
+rr = np.arange(0, 5000)
+
 
 
 # Velocity profile
 #------------------
-
-# Vary steepness parameters to be looped through
-bb = [1,2,3]
 
 # Create empty lists to appended in loop
 v_north = []
@@ -40,8 +35,8 @@ v_south = []
 
 for b in bb:
 
-    vn = vm_north * ( r_north / rm_north ) * np.exp( (1/b) * ( 1 - ( r_north/rm_north )**b ) )
-    vs = vm_south * ( r_south / -rm_south ) * np.exp( (1/b) * ( 1 - ( r_south/-rm_south )**b ) )
+    vn = vm_north * ( rr / rm_north ) * np.exp( (1/b) * ( 1. - ( rr/rm_north )**b ) )
+    vs = vm_south * ( rr / rm_south ) * np.exp( (1/b) * ( 1. - ( rr/rm_south )**b ) )
 
     v_north.append(vn)
     v_south.append(vs)
@@ -54,15 +49,16 @@ for b in bb:
 
 plt.figure()
 
-plt.plot(r_north, v_north[0], color='#1f77b4', label=r'$b=1$')
-plt.plot(r_north, v_north[1], color='#ff7f0e', label=r'$b=1.5$')
-plt.plot(r_north, v_north[2], color='#2ca02c', label=r'$b=2$')
-plt.plot(r_south, v_south[0], color='#1f77b4')
-plt.plot(r_south, v_south[1], color='#ff7f0e')
-plt.plot(r_south, v_south[2], color='#2ca02c')
+plt.plot(rr, v_north[0], color='#1f77b4', label=r'$b=1$')
+plt.plot(rr, v_north[1], color='#ff7f0e', label=r'$b=1.5$')
+plt.plot(rr, v_north[2], color='#2ca02c', label=r'$b=2$')
+plt.plot(-rr, v_south[0], color='#1f77b4')
+plt.plot(-rr, v_south[1], color='#ff7f0e')
+plt.plot(-rr, v_south[2], color='#2ca02c')
 
 plt.legend()
 plt.xlabel('Distance (km)')
 plt.ylabel('Velocity (m/s)')
 plt.title('Velocity profile for varying steepness')
 plt.savefig('./vortices/velocity_profile.png')
+# plt.show()
