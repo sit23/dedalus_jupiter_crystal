@@ -1,15 +1,14 @@
 """
 
 python3 ./reproduce/merge/delete_merge.py &&
-mpiexec -n 4 python3 ./reproduce/merge/merge.py &&
-mpiexec -n 4 python3 ./reproduce/merge/plot_merge.py ./reproduce/merge/merge_snapshots/*.h5 --output ./reproduce/merge/merge_frames &&
+mpiexec -n 8 python3 ./reproduce/merge/merge.py &&
+mpiexec -n 8 python3 ./reproduce/merge/plot_merge.py ./reproduce/merge/merge_snapshots/*.h5 --output ./reproduce/merge/merge_frames &&
 ffmpeg -r 50 -i ./reproduce/merge/merge_frames/write_%06d.png ./reproduce/merge/z_merge.mp4
 
 """
 
 
 import numpy as np
-import scipy
 import dedalus.public as d3
 import logging
 logger = logging.getLogger(__name__)
@@ -25,7 +24,7 @@ second = hour / 3600
 
 # Numerical Parameters
 Lx, Lz = 1, 1
-Nx, Nz = 128, 128
+Nx, Nz = 512, 512
 dealias = 3/2                   
 timestepper = d3.RK222
 max_timestep = 1e-2
@@ -76,7 +75,7 @@ coscolat['g'] = np.cos(np.sqrt((x)**2. + (y)**2) / R)
 #-----------------------
 
 # Steepness parameter
-b = 1.5
+b = 0.1
 
 # Rossby Number
 Ro = 0.2
@@ -97,7 +96,7 @@ phi = g * (h + H)
 # Calculate Burger Number -- Currently Bu ~ 10
 phi0 = g*H
 Bu = phi0 / (f0 * rm)**2 
-# pdb.set_trace()
+pdb.set_trace()
 
 
 # Initial condition: south pole vortices
