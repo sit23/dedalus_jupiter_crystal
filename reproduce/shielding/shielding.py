@@ -38,7 +38,7 @@ printout = 1
 # Planetary Configurations
 R = 71.4e6 * meter           
 Omega = 1.74e-4 / second            
-nu = 1e5 * meter**2 / second / 32**2
+nu = 1e2 * meter**2 / second / 32**2
 g = 24.79 * meter / second**2
 
 
@@ -75,7 +75,7 @@ coscolat['g'] = np.cos(np.sqrt((x)**2. + (y)**2) / R)
 #-----------------------
 
 # Steepness parameter
-b = 4.5
+b = 2.5
 
 # Rossby Number
 Ro = 0.2
@@ -90,7 +90,7 @@ rm = 1e6 * meter                                     # Radius of vortex (km)
 vm = Ro * f0 * rm                                    # Calculate speed with Ro
 
 # Calculate deformation radius with Burger number
-H = 5e5 * meter 
+H = 5e4 * meter 
 phi = g * (h + H) 
 
 # Calculate Burger Number -- Currently Bu ~ 10
