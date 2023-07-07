@@ -1,9 +1,9 @@
 """
 
-python3 ./reproduce/merge/delete_merge.py &&
-mpiexec -n 16 python3 ./reproduce/merge/merge.py &&
-mpiexec -n 16 python3 ./reproduce/merge/plot_merge.py ./reproduce/merge/merge_snapshots/*.h5 --output ./reproduce/merge/merge_frames &&
-ffmpeg -r 50 -i ./reproduce/merge/merge_frames/write_%06d.png ./reproduce/merge/z_merge.mp4
+python3 ./reproduce/shielding/delete_shielding.py &&
+mpiexec -n 16 python3 ./reproduce/shielding/shielding.py &&
+mpiexec -n 16 python3 ./reproduce/shielding/plot_shielding.py ./reproduce/shielding/shielding_snapshots/*.h5 --output ./reproduce/shielding/shielding_frames &&
+ffmpeg -r 50 -i ./reproduce/shielding/shielding_frames/write_%06d.png ./reproduce/shielding/z_shielding.mp4
 
 """
 
@@ -18,7 +18,7 @@ import pdb
 #------------
 
 # Simulation units
-meter = 1 / 69.911e6
+meter = 1 / 71.4e6
 hour = 1
 second = hour / 3600
 
@@ -36,9 +36,9 @@ stop_sim_time = 24 * days
 printout = 1
  
 # Planetary Configurations
-R = 69.911e6 * meter           
-Omega = 1.76e-4 / second            
-nu = 1e5 * meter**2 / second / 32**2   
+R = 71.4e6 * meter           
+Omega = 1.74e-4 / second            
+nu = 1e5 * meter**2 / second / 32**2
 g = 24.79 * meter / second**2
 
 
@@ -75,7 +75,7 @@ coscolat['g'] = np.cos(np.sqrt((x)**2. + (y)**2) / R)
 #-----------------------
 
 # Steepness parameter
-b = 1.5
+b = 4.5
 
 # Rossby Number
 Ro = 0.2
@@ -97,19 +97,16 @@ phi = g * (h + H)
 phi0 = g*H
 Bu = phi0 / (f0 * rm)**2 
 
-# Deformation radius
-Ld = np.sqrt(phi0) / f0 / meter 
-
 phi00 = phi0 * second**2 / meter**2
-pdb.set_trace()
+# pdb.set_trace()
 
 
 # Initial condition: south pole vortices
 #----------------------------------------
 
 # South pole coordinates
-south_lat = [88.6, 83.7, 84.3, 85.0, 84.1, 83.2]
-south_long = [211.3, 157.1, 94.3, 13.4, 298.8, 229.7]
+south_lat = [90., 85., 85., 85., 85., 85.]
+south_long = [0., 0., 72., 144., 216., 288.]
 
 # Convert longitude and latitude inputs into x,y coordinates
 def conversion(lat, lon):
@@ -161,7 +158,7 @@ solver.stop_sim_time = stop_sim_time
 #-----------
 
 # Set up and save snapshots
-snapshots = solver.evaluator.add_file_handler('./reproduce/merge/merge_snapshots', sim_dt=printout, max_writes=10)
+snapshots = solver.evaluator.add_file_handler('./reproduce/shielding/shielding_snapshots', sim_dt=printout, max_writes=10)
 
 # experiments/{}_{}d_Bu{}_b{}/merge_snapshots'.format(Nx, days, round(Bu), b)
 
