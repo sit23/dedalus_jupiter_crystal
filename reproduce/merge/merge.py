@@ -96,7 +96,12 @@ phi = g * (h + H)
 # Calculate Burger Number -- Currently Bu ~ 10
 phi0 = g*H
 Bu = phi0 / (f0 * rm)**2 
-# pdb.set_trace()
+
+# Deformation radius
+Ld = np.sqrt(phi0) / f0 / meter 
+
+phi00 = phi0 * second**2 / meter**2
+pdb.set_trace()
 
 
 # Initial condition: south pole vortices

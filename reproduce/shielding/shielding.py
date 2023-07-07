@@ -12,7 +12,9 @@ import numpy as np
 import dedalus.public as d3
 import logging
 logger = logging.getLogger(__name__)
+
 import pdb
+import scipy.special as sc
 
 # Parameters
 #------------
@@ -97,11 +99,14 @@ phi = g * (h + H)
 phi0 = g*H
 Bu = phi0 / (f0 * rm)**2 
 
+# Deformation radius
+Ld = np.sqrt(phi0) / f0 / meter 
+
 phi00 = phi0 * second**2 / meter**2
 # pdb.set_trace()
 
 
-# Initial condition: south pole vortices
+# Initial condition: South pole vortices
 #----------------------------------------
 
 # South pole coordinates
@@ -122,8 +127,8 @@ for i in range(len(south_lat)):
 
     # Overide u,v components in velocity field
     u['g'][0] += - vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (y-yy[i]) / ( r + 1e-16 ) )
-    u['g'][1] += vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (x-xx[i]) / ( r + 1e-16 ) )                          
-
+    u['g'][1] += vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (x-xx[i]) / ( r + 1e-16 ) )   
+                        
 
 
 # Initial condition: height
@@ -134,11 +139,6 @@ problem.add_equation("g*lap(h) + c = - div(u@grad(u) + 2*Omega*coscolat*zcross(u
 problem.add_equation("integ(h) = 0")
 solver = problem.build_solver()
 solver.solve()
-
-
-# Initial condition: perturbation
-#---------------------------------
-# h['g'] += ( np.random.rand(h['g'].shape[0], h['g'].shape[1]) - 0.5 ) * 1e-20
 
 
 #-----------------------------------------------------------------------------------------------------------------
