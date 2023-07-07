@@ -130,11 +130,14 @@ solver.solve()
 # COMPARE PHI
 #-------------
 
-gamma = sc.gammainc(2/b, (1/b)*(r/rm)**b)
+gamma = sc.gammainc( 2/b, (1/b) * (r/rm)**b ) 
 
-phi = phi0 * (1 - (Ro/Bu) * np.exp(1/b) * b**(2/b -1) * gamma )
+phi = phi0 * (Ro/Bu) * np.exp(1/b) * b**( (2/b) - 1) * gamma 
+
+phii = phi - np.sum(phi)
 
 hh = h['g']
+hhg = hh * g
 pdb.set_trace()
 
 #-----------------------------------------------------------------------------------------------------------------
