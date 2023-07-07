@@ -5,7 +5,7 @@ I want to compare my results for phi and their analytical solution of phi
 """
 
 import numpy as np
-import scipy
+import scipy.special as sc
 import dedalus.public as d3
 import pdb
 
@@ -48,3 +48,13 @@ print( (phi0 * second**2 / meter**2) / 1e6)
 
 #-----------------------------------------------------------------------------------------------------------------
 
+x = np.linspace(-0.5, 0.5, 101) 
+y = np.linspace(-0.5, 0.5, 101) 
+
+r = np.sqrt(x**2 + y**2)
+
+gamma = sc.gammainc(2/b, (1/b)*(r/rm)**b)
+
+phi = phi0 * (1 - (Ro/Bu) * np.exp(1/b) * b**(2/b -1) * gamma )
+
+pdb.set_trace()
