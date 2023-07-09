@@ -5,6 +5,9 @@ mpiexec -n 16 python3 ./reproduce/shielding/shielding.py &&
 mpiexec -n 16 python3 ./reproduce/shielding/plot_shielding.py ./reproduce/shielding/shielding_snapshots/*.h5 --output ./reproduce/shielding/shielding_frames &&
 ffmpeg -r 50 -i ./reproduce/shielding/shielding_frames/write_%06d.png ./reproduce/shielding/z_shielding.mp4
 
+
+ffmpeg -r 50 -i ./reproduce/shielding/split/nu1e2_Bu10b4p5_250d/shielding_frames/write_%06d.png ./reproduce/shielding/split/nu1e2_Bu10b4p5_250d/nu1e2_Bu10b4p5_250d.mp4
+
 """
 
 
@@ -33,14 +36,14 @@ max_timestep = 1e-2
 dtype = np.float64
 
 # Length of simulation
-days = 50
+days = 250
 stop_sim_time = 24 * days
 printout = 1
  
 # Planetary Configurations
 R = 71.4e6 * meter           
 Omega = 1.74e-4 / second            
-nu = 1e2 * meter**2 / second / 32**2
+nu = 1e2 * meter**2 / second / 32**2 
 g = 24.79 * meter / second**2
 
 
@@ -77,7 +80,7 @@ coscolat['g'] = np.cos(np.sqrt((x)**2. + (y)**2) / R)
 #-----------------------
 
 # Steepness parameter
-b = 2.5
+b = 4.5
 
 # Rossby Number
 Ro = 0.2
@@ -158,7 +161,8 @@ solver.stop_sim_time = stop_sim_time
 #-----------
 
 # Set up and save snapshots
-snapshots = solver.evaluator.add_file_handler('./reproduce/shielding/shielding_snapshots', sim_dt=printout, max_writes=10)
+snapshots = solver.evaluator.add_file_handler('./reproduce/shielding/shielding_snapshots'.format(nu),
+                                               sim_dt=printout, max_writes=10)
 
 # experiments/{}_{}d_Bu{}_b{}/merge_snapshots'.format(Nx, days, round(Bu), b)
 
