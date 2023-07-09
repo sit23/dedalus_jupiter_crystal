@@ -161,8 +161,7 @@ solver.stop_sim_time = stop_sim_time
 #-----------
 
 # Set up and save snapshots
-snapshots = solver.evaluator.add_file_handler('./reproduce/shielding/shielding_snapshots'.format(nu),
-                                               sim_dt=printout, max_writes=10)
+snapshots = solver.evaluator.add_file_handler('./reproduce/shielding/shielding_snapshots', sim_dt=printout, max_writes=10)
 
 # experiments/{}_{}d_Bu{}_b{}/merge_snapshots'.format(Nx, days, round(Bu), b)
 

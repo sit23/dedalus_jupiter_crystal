@@ -15,18 +15,54 @@ import pdb
 # Read all data sets using glob to find pathnames (returns array of strings with path)
 files = sorted(glob.glob('./reproduce/shielding/diffusion/*.nc'))
 
-# names = ['ds_nu0p1e1', 'ds_nu1e1', 'ds_nu1e2', 'ds_nu1e3', 'ds_nu1e4', 'ds_nu1e5']
+names = ['ds_nu0p1e1', 'ds_nu1e1', 'ds_nu1e2', 'ds_nu1e3', 'ds_nu1e4', 'ds_nu1e5']
+
+vort = []
+
+for f in files:
+
+    ds = xar.open_dataset(f)
+
+    vorticity = ds.vorticity[:,256,256]
+    t = ds.t
+
+    vort.append(vorticity)
+
+#----------------------------------------------------------------------------
+
+# plot all magnitudes
+
+plt.figure()
+
+for i in range(len(files)):
+
+    plt.plot(t, vort[i], label=names[i])
 
 
-ds_nu0p1e1 = xar.open_dataset(files[0])
-ds_nu1e1 = xar.open_dataset(files[1])
-ds_nu1e2 = xar.open_dataset(files[2])
-ds_nu1e3 = xar.open_dataset(files[3])
-ds_nu1e4 = xar.open_dataset(files[4])
+plt.legend()
+plt.title('Vorticity for varying magntiudes of diffusion')
+plt.xlabel('time (t)')
+plt.ylabel('vorticity')
+
+plt.savefig('./reproduce/shielding/diffusion/plot_vort_all.png')
+plt.show()
 
 
-print(ds_nu1e1.vorticity)
+#----------------------------------------------------------------------------
 
-# for i in range(len(files)):
+# Plot small magnitudes
 
-#     vorticity = ds
+plt.figure()
+
+for i in range(len(files)):
+
+    plt.plot(t, vort[i], label=names[i])
+
+
+plt.legend()
+plt.title('Vorticity for varying magntiudes of diffusion')
+plt.xlabel('time (t)')
+plt.ylabel('vorticity')
+
+plt.savefig('./reproduce/shielding/diffusion/plot_vort_all.png')
+plt.show()

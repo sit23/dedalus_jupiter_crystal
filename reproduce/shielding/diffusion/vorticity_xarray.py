@@ -26,9 +26,5 @@ for var_name in list_var_names:
 # Merge into single xarray
 dataset = xar.merge(dataset_list)
 
-<<<<<<< HEAD:reproduce/shielding/diffusion/vorticity_xarray.py
 # Save dataset to netcdf file
-=======
-# Download dataset
->>>>>>> cd16fdde13e4500efce61bf94f7e3ad45d82f6bf:reproduce/shielding/diffusion/vorticity_xarray.py
 dataset.to_netcdf('./reproduce/shielding/diffusion/ds_nu1e5.nc') 
