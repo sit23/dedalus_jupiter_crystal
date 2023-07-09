@@ -6,7 +6,7 @@ mpiexec -n 16 python3 ./reproduce/shielding/plot_shielding.py ./reproduce/shield
 ffmpeg -r 50 -i ./reproduce/shielding/shielding_frames/write_%06d.png ./reproduce/shielding/z_shielding.mp4
 
 
-ffmpeg -r 50 -i ./reproduce/shielding/split/nu1e2_Bu10b4p5_250d/shielding_frames/write_%06d.png ./reproduce/shielding/split/nu1e2_Bu10b4p5_250d/nu1e2_Bu10b4p5_250d.mp4
+ffmpeg -r 50 -i ./reproduce/shielding/250d/nu1e2_Bu10b4p5_250d/shielding_frames/write_%06d.png ./reproduce/shielding/split/nu1e2_Bu10b4p5_250d.mp4
 
 """
 
