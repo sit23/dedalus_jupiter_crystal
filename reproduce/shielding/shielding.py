@@ -6,7 +6,7 @@ mpiexec -n 16 python3 ./reproduce/shielding/plot_shielding.py ./reproduce/shield
 ffmpeg -r 50 -i ./reproduce/shielding/shielding_frames/write_%06d.png ./reproduce/shielding/z_shielding.mp4
 
 
-ffmpeg -r 50 -i ./reproduce/shielding/250d/nu1e2_Bu10b4p5_250d/shielding_frames/write_%06d.png ./reproduce/shielding/split/nu1e2_Bu10b4p5_250d.mp4
+ffmpeg -r 50 -i ./reproduce/shielding/250d/nu1e2_Bu10b1p5_250d/shielding_frames/write_%06d.png ./reproduce/shielding/250d/nu1e2_Bu10b1p5_250d.mp4
 
 """
 
@@ -36,14 +36,14 @@ max_timestep = 1e-2
 dtype = np.float64
 
 # Length of simulation
-days = 250
+days = 50
 stop_sim_time = 24 * days
 printout = 1
  
 # Planetary Configurations
 R = 71.4e6 * meter           
 Omega = 1.74e-4 / second            
-nu = 1e2 * meter**2 / second / 32**2 
+nu = 1e0 * meter**2 / second / 32**2 
 g = 24.79 * meter / second**2
 
 
@@ -80,7 +80,7 @@ coscolat['g'] = np.cos(np.sqrt((x)**2. + (y)**2) / R)
 #-----------------------
 
 # Steepness parameter
-b = 1.5
+b = 2.5
 
 # Rossby Number
 Ro = 0.2

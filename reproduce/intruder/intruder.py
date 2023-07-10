@@ -1,46 +1,50 @@
 """
 
 python3 ./reproduce/intruder/delete_intruder.py &&
-mpiexec -n 4 python3 ./reproduce/intruder/intruder.py &&
-mpiexec -n 4 python3 ./reproduce/intruder/plot_intruder.py ./reproduce/intruder/intruder_snapshots/*.h5 --output ./reproduce/intruder/intruder_frames &&
+mpiexec -n 16 python3 ./reproduce/intruder/intruder.py &&
+mpiexec -n 16 python3 ./reproduce/intruder/plot_intruder.py ./reproduce/intruder/intruder_snapshots/*.h5 --output ./reproduce/intruder/intruder_frames &&
 ffmpeg -r 50 -i ./reproduce/intruder/intruder_frames/write_%06d.png ./reproduce/intruder/z_intruder.mp4
+
+
+ffmpeg -r 50 -i ./reproduce/intruder/intruder_frames/write_%06d.png ./reproduce/intruder/experiment.mp4
 
 """
 
 
 import numpy as np
-import scipy
 import dedalus.public as d3
 import logging
 logger = logging.getLogger(__name__)
+
 import pdb
+import scipy.special as sc
 
 # Parameters
 #------------
 
 # Simulation units
-meter = 1 / 69.911e6
+meter = 1 / 71.4e6
 hour = 1
 second = hour / 3600
 
 # Numerical Parameters
 Lx, Lz = 1, 1
-Nx, Nz = 128, 128
+Nx, Nz = 512, 512
 dealias = 3/2                   
 timestepper = d3.RK222
 max_timestep = 1e-2
 dtype = np.float64
 
 # Length of simulation
-days = 100
+days = 500
 stop_sim_time = 24 * days
 printout = 1
-
+ 
 # Planetary Configurations
-R = 69.911e6 * meter           
-Omega = 1.76e-4 / second            
-nu = 1e5 * meter**2 / second / 32**2   
-g = 24.79 * meter / second**2              
+R = 71.4e6 * meter           
+Omega = 1.74e-4 / second            
+nu = 1e2 * meter**2 / second / 32**2 
+g = 24.79 * meter / second**2
 
 
 #-----------------------------------------------------------------------------------------------------------------
@@ -76,10 +80,10 @@ coscolat['g'] = np.cos(np.sqrt((x)**2. + (y)**2) / R)
 #-----------------------
 
 # Steepness parameter
-b = 1
+b = 1.5
 
 # Rossby Number
-Ro = 0.2
+Ro = 0.23
 
 
 # Dependent variables
@@ -91,21 +95,26 @@ rm = 1e6 * meter                                     # Radius of vortex (km)
 vm = Ro * f0 * rm                                    # Calculate speed with Ro
 
 # Calculate deformation radius with Burger number
-H = 5e3 * meter
-phi = g * (h + H)
+H = 5e4 * meter 
+phi = g * (h + H) 
 
-# Burger Number -- Currently Bu ~ 10
-# phi0 = g*H
-# Bu = phi0 / (f0 * rm)**2 
+# Calculate Burger Number -- Currently Bu ~ 10
+phi0 = g*H
+Bu = phi0 / (f0 * rm)**2 
+
+# Deformation radius
+Ld = np.sqrt(phi0) / f0 / meter 
+
+phi00 = phi0 * second**2 / meter**2
 # pdb.set_trace()
 
 
-# Initial condition: south pole vortices
+# Initial condition: South pole vortices
 #----------------------------------------
 
 # South pole coordinates
-south_lat = [88.6, 83.7, 84.3, 85.0, 84.1, 83.2]
-south_long = [211.3, 157.1, 94.3, 13.4, 298.8, 229.7]
+south_lat = [90., 85., 85., 85., 85., 85., 75.]
+south_long = [0., 0., 72., 144., 216., 288., 0.]
 
 # Convert longitude and latitude inputs into x,y coordinates
 def conversion(lat, lon):
@@ -121,8 +130,8 @@ for i in range(len(south_lat)):
 
     # Overide u,v components in velocity field
     u['g'][0] += - vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (y-yy[i]) / ( r + 1e-16 ) )
-    u['g'][1] += vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (x-xx[i]) / ( r + 1e-16 ) )                          
-
+    u['g'][1] += vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (x-xx[i]) / ( r + 1e-16 ) )   
+                        
 
 
 # Initial condition: height
@@ -133,11 +142,6 @@ problem.add_equation("g*lap(h) + c = - div(u@grad(u) + 2*Omega*coscolat*zcross(u
 problem.add_equation("integ(h) = 0")
 solver = problem.build_solver()
 solver.solve()
-
-
-# Initial condition: perturbation
-#---------------------------------
-h['g'] += ( np.random.rand(h['g'].shape[0], h['g'].shape[1]) - 0.5 ) * 1e-5
 
 
 #-----------------------------------------------------------------------------------------------------------------
@@ -159,14 +163,9 @@ solver.stop_sim_time = stop_sim_time
 # Set up and save snapshots
 snapshots = solver.evaluator.add_file_handler('./reproduce/intruder/intruder_snapshots', sim_dt=printout, max_writes=10)
 
-# add velocity field
-snapshots.add_task(h, name='height')
-snapshots.add_task(-d3.div(d3.skew(u)), name='vorticity')
+# add potential vorticity field
 snapshots.add_task((-d3.div(d3.skew(u)) + 2*Omega*coscolat) / phi, name='PV')
 
-snapshots.add_task(d3.dot(u,ex), name='u')
-snapshots.add_task(d3.dot(u,ey), name='v')
-snapshots.add_task(np.sqrt(d3.dot(u,ex)**2 + d3.dot(u,ey)**2), name='vortex')
 
 #-----------------------------------------------------------------------------------------------------------------
 

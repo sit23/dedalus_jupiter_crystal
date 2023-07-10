@@ -1,6 +1,6 @@
 """
 
-python3 ./reproduce/shielding/diffusion/vorticity_comparison.py
+python3 ./reproduce/shielding/diffusion/vorticity_max.py
 
 """
 
@@ -18,18 +18,30 @@ files = sorted(glob.glob('./reproduce/shielding/diffusion/*.nc'))
 # experiment names in case needed
 names = ['nu1e-1', 'nu1e1', 'nu1e2', 'nu1e3', 'nu1e4', 'nu1e5']
 
+
+# Create empty lists ready for loop
 vort = []
+max_vort = []
 
 for f in files:
 
     ds = xar.open_dataset(f)
 
-    vorticity = ds.vorticity[:,256,256]
+    for i in range(len(ds.t)):
+
+        maxx = ds.vorticity[i].max().values
+
+        max_vort.append(maxx)
+
+    # set t values
     t = ds.t
 
-    vort.append(vorticity)
+    # add max vorticity arrays into one big array
+    vort.append(max_vort)
 
-pdb.set_trace()
+    # reset max_vort list for next loop (possibly better method than this?)
+    max_vort=[]
+
 
 #----------------------------------------------------------------------------
 
@@ -43,12 +55,11 @@ for i in range(len(files)):
 
 
 plt.legend()
-plt.title('Vorticity for varying magntiudes of diffusion (at the origin)')
+plt.title('Max vorticity for varying magntiudes of diffusion')
 plt.xlabel('time (t)')
 plt.ylabel('vorticity')
 
-plt.savefig('./reproduce/shielding/diffusion/plot_vort_all.png')
-plt.show()
+plt.savefig('./reproduce/shielding/diffusion/max_vort_all.png')
 
 
 #----------------------------------------------------------------------------
@@ -63,9 +74,8 @@ for i in range(3):
 
 
 plt.legend()
-plt.title('Vorticity for varying magntiudes of diffusion (at the origin)')
+plt.title('Max vorticity for varying magntiudes of diffusion')
 plt.xlabel('time (t)')
 plt.ylabel('vorticity')
 
-plt.savefig('./reproduce/shielding/diffusion/plot_vort_smaller.png')
-plt.show()
+plt.savefig('./reproduce/shielding/diffusion/max_vort_smaller.png')
