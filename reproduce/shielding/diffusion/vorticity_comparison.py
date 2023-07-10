@@ -16,7 +16,7 @@ import pdb
 files = sorted(glob.glob('./reproduce/shielding/diffusion/*.nc'))
 
 # experiment names in case needed
-names = ['nu1e-1', 'nu1e1', 'nu1e2', 'nu1e3', 'nu1e4', 'nu1e5']
+names = ['nu1e0', 'nu1e1', 'nu1e2', 'nu1e3', 'nu1e4', 'nu1e5']
 
 vort = []
 
@@ -28,8 +28,6 @@ for f in files:
     t = ds.t
 
     vort.append(vorticity)
-
-pdb.set_trace()
 
 #----------------------------------------------------------------------------
 
@@ -48,7 +46,6 @@ plt.xlabel('time (t)')
 plt.ylabel('vorticity')
 
 plt.savefig('./reproduce/shielding/diffusion/plot_vort_all.png')
-plt.show()
 
 
 #----------------------------------------------------------------------------
@@ -68,4 +65,3 @@ plt.xlabel('time (t)')
 plt.ylabel('vorticity')
 
 plt.savefig('./reproduce/shielding/diffusion/plot_vort_smaller.png')
-plt.show()

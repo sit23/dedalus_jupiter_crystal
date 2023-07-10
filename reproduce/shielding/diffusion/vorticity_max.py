@@ -16,7 +16,7 @@ import pdb
 files = sorted(glob.glob('./reproduce/shielding/diffusion/*.nc'))
 
 # experiment names in case needed
-names = ['nu1e-1', 'nu1e1', 'nu1e2', 'nu1e3', 'nu1e4', 'nu1e5']
+names = ['nu1e0', 'nu1e1', 'nu1e2', 'nu1e3', 'nu1e4', 'nu1e5']
 
 
 # Create empty lists ready for loop
@@ -64,7 +64,7 @@ plt.savefig('./reproduce/shielding/diffusion/max_vort_all.png')
 
 #----------------------------------------------------------------------------
 
-# Plot small magnitudes
+# Plot smaller magnitudes that look more stable
 
 plt.figure()
 
