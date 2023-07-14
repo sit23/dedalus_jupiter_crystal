@@ -14,7 +14,7 @@ mpiexec -n 16 python3 ./reproduce/intruder/plot_intruder.py ./reproduce/intruder
 ffmpeg -r 50 -i ./reproduce/intruder/intruder_frames/write_%06d.png ./reproduce/intruder/z_intruder.mp4
 
 
-ffmpeg -r 50 -i ./reproduce/intruder/intruder_frames/write_%06d.png ./reproduce/intruder/experiment.mp4
+ffmpeg -r 50 -i ./reproduce/intruder/intruder_frames/write_%06d.png ./reproduce/intruder/intruder_subset.mp4
 
 """
 
@@ -40,9 +40,9 @@ def main(filename, start, count, output):
 
     # Layout
     nrows, ncols = 1, 1
-    image = plot_tools.Box(1, 1)
-    pad = plot_tools.Frame(0.2, 0, 0, 0)
-    margin = plot_tools.Frame(0.2, 0.1, 0, 0)
+    image = plot_tools.Box(1, 1) 
+    pad = plot_tools.Frame(0.2, 0, 0, 0) 
+    margin = plot_tools.Frame(0.2, 0.1, 0, 0) 
 
     # Create multifigure
     mfig = plot_tools.MultiFigure(nrows, ncols, image, pad, margin, scale)

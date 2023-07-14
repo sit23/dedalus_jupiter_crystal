@@ -6,7 +6,13 @@ mpiexec -n 16 python3 ./reproduce/intruder/plot_intruder.py ./reproduce/intruder
 ffmpeg -r 50 -i ./reproduce/intruder/intruder_frames/write_%06d.png ./reproduce/intruder/z_intruder.mp4
 
 
-ffmpeg -r 50 -i ./reproduce/intruder/intruder_frames/write_%06d.png ./reproduce/intruder/experiment.mp4
+ffmpeg -r 20 -i ./reproduce/intruder/intruder_frames/write_%06d.png ./reproduce/intruder/intruder.mp4
+
+mpiexec -n 16 python3 ./reproduce/intruder/plot_intruder.py ./reproduce/intruder/intruder_snapshots/*.h5 --output ./reproduce/intruder/intruder_frames
+
+
+Stitching two mp4s together:
+    - ffmpeg -i ./reproduce/intruder/intruder_original.mp4 -i ./reproduce/intruder/intruder_24.mp4 -filter_complex hstack ./reproduce/intruder/all_cyclones.mp4
 
 """
 
@@ -17,14 +23,15 @@ import logging
 logger = logging.getLogger(__name__)
 
 import pdb
-import scipy.special as sc
+
 
 # Parameters
 #------------
 
 # Simulation units
 meter = 1 / 71.4e6
-hour = 1
+day = 1
+hour = day / 24
 second = hour / 3600
 
 # Numerical Parameters
@@ -35,10 +42,9 @@ timestepper = d3.RK222
 max_timestep = 1e-2
 dtype = np.float64
 
-# Length of simulation
-days = 500
-stop_sim_time = 24 * days
-printout = 1
+# Length of simulation (days)
+stop_sim_time = 500
+printout = 0.1
  
 # Planetary Configurations
 R = 71.4e6 * meter           
@@ -102,9 +108,7 @@ phi = g * (h + H)
 phi0 = g*H
 Bu = phi0 / (f0 * rm)**2 
 
-# Deformation radius
-Ld = np.sqrt(phi0) / f0 / meter 
-
+# Check phi0 dimensionalised
 phi00 = phi0 * second**2 / meter**2
 # pdb.set_trace()
 
