@@ -1,49 +1,51 @@
 """
 
-python3 ./reproduce/cyclones/delete_cyclones.py &&
-mpiexec -n 4 python3 ./reproduce/cyclones/cyclones.py &&
-mpiexec -n 4 python3 ./reproduce/cyclones/plot_cyclones.py ./reproduce/cyclones/cyclones_snapshots/*.h5 --output ./reproduce/cyclones/cyclones_frames &&
-ffmpeg -r 50 -i ./reproduce/cyclones/cyclones_frames/write_%06d.png ./reproduce/cyclones/z_cyclones.mp4
+mpiexec -n 16 python3 ./investigate/investigate.py &&
+mpiexec -n 16 python3 ./investigate/plot_investigate.py ./investigate/investigate_snapshots/*.h5 --output ./investigate/investigate_frames &&
+ffmpeg -r 50 -i ./investigate/investigate_frames/write_%06d.png ./investigate/z_investigate.mp4
 
-Stitching two mp4s together:
-    - ffmpeg -i ./reproduce/cyclones/z_cyclones1.mp4 -i ./reproduce/cyclones/z_anticyclones1.mp4 -filter_complex hstack ./reproduce/cyclones/all_cyclones.mp4
+
+ffmpeg -r 20 -i ./investigate/investigate_frames/write_%06d.png ./investigate/investigate.mp4
+
+mpiexec -n 16 python3 ./investigate/plot_investigate.py ./investigate/investigate_snapshots/*.h5 --output ./investigate/investigate_frames
 
 """
 
 
 import numpy as np
-import scipy
 import dedalus.public as d3
 import logging
 logger = logging.getLogger(__name__)
+
 import pdb
+
 
 # Parameters
 #------------
 
 # Simulation units
-meter = 1 / 69.911e6
-hour = 1
+meter = 1 / 71.4e6
+day = 1
+hour = day / 24
 second = hour / 3600
 
 # Numerical Parameters
 Lx, Lz = 1, 1
-Nx, Nz = 128, 128
+Nx, Nz = 512, 512
 dealias = 3/2                   
 timestepper = d3.RK222
 max_timestep = 1e-2
 dtype = np.float64
 
-# Length of simulation
-days = 40
-stop_sim_time = 24 * days
-printout = 1
-
+# Length of simulation (days)
+stop_sim_time = 500
+printout = 0.1
+ 
 # Planetary Configurations
-R = 69.911e6 * meter           
-Omega = 1.76e-4 / second            
-nu = 1e5 * meter**2 / second / 32**2   
-g = 24.79 * meter / second**2           
+R = 71.4e6 * meter           
+Omega = 1.74e-4 / second            
+nu = 1e2 * meter**2 / second / 32**2 
+g = 24.79 * meter / second**2
 
 
 #-----------------------------------------------------------------------------------------------------------------
@@ -82,7 +84,8 @@ coscolat['g'] = np.cos(np.sqrt((x)**2. + (y)**2) / R)
 b = 1.5
 
 # Rossby Number
-Ro = 0.2
+Ro = 0.23
+
 
 # Dependent variables
 #---------------------
@@ -93,24 +96,41 @@ rm = 1e6 * meter                                     # Radius of vortex (km)
 vm = Ro * f0 * rm                                    # Calculate speed with Ro
 
 # Calculate deformation radius with Burger number
-H = 5e4 * meter
-phi = g * (h + H)
+H = 5e4 * meter 
+phi = g * (h + H) 
 
-# Burger Number -- Currently Bu ~ 10
-# Bu = phi / (f0 * rm)**2 
+# Calculate Burger Number -- Currently Bu ~ 10
+phi0 = g*H
+Bu = phi0 / (f0 * rm)**2 
+
+# Check phi0 dimensionalised
+phi00 = phi0 * second**2 / meter**2
 # pdb.set_trace()
 
 
-# Initial condition: off-centre cyclone
-#---------------------------------------
+# Initial condition: South pole vortices
+#----------------------------------------
 
-a = 0.25
-r = np.sqrt((x-a)**2 + (y-a)**2)                     # radius
+# South pole coordinates
+south_lat = [88.6, 83.7, 84.3, 85.0, 84.1, 83.2]
+south_long = [211.3, 157.1, 94.3, 13.4, 298.8, 229.7]
 
-# Overide u,v components in velocity field
-u['g'][0] = - vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (y-a) / ( r + 1e-16 ) )
-u['g'][1] = vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (x-a) / ( r + 1e-16 ) )                         
+# Convert longitude and latitude inputs into x,y coordinates
+def conversion(lat, lon):
+    lat, lon = np.deg2rad(lat), np.deg2rad(lon)
+    x = R * np.cos(lat) * np.cos(lon)
+    y = R * np.cos(lat) * np.sin(lon)
+    return x, y
 
+for i in range(len(south_lat)):
+
+    xx,yy = conversion(south_lat, south_long)
+    r = np.sqrt( (x-xx[i])**2 + (y-yy[i])**2 )
+
+    # Overide u,v components in velocity field
+    u['g'][0] += - vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (y-yy[i]) / ( r + 1e-16 ) )
+    u['g'][1] += vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (x-xx[i]) / ( r + 1e-16 ) )   
+                        
 
 
 # Initial condition: height
@@ -121,11 +141,6 @@ problem.add_equation("g*lap(h) + c = - div(u@grad(u) + 2*Omega*coscolat*zcross(u
 problem.add_equation("integ(h) = 0")
 solver = problem.build_solver()
 solver.solve()
-
-
-# Initial condition: perturbation
-#---------------------------------
-h['g'] += ( np.random.rand(h['g'].shape[0], h['g'].shape[1]) - 0.5 ) * 1e-6
 
 
 #-----------------------------------------------------------------------------------------------------------------
@@ -145,16 +160,11 @@ solver.stop_sim_time = stop_sim_time
 #-----------
 
 # Set up and save snapshots
-snapshots = solver.evaluator.add_file_handler('./reproduce/cyclones/cyclones_snapshots', sim_dt=printout, max_writes=10)
+snapshots = solver.evaluator.add_file_handler('./investigate/investigate_snapshots', sim_dt=printout, max_writes=10)
 
-# add velocity field
-snapshots.add_task(h, name='height')
-snapshots.add_task(-d3.div(d3.skew(u)), name='vorticity')
+# add potential vorticity field
 snapshots.add_task((-d3.div(d3.skew(u)) + 2*Omega*coscolat) / phi, name='PV')
 
-snapshots.add_task(d3.dot(u,ex), name='u')
-snapshots.add_task(d3.dot(u,ey), name='v')
-snapshots.add_task(np.sqrt(d3.dot(u,ex)**2 + d3.dot(u,ey)**2), name='vortex')
 
 #-----------------------------------------------------------------------------------------------------------------
 
