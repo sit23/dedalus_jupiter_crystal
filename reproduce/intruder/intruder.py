@@ -3,16 +3,16 @@
 python3 ./reproduce/intruder/delete_intruder.py &&
 mpiexec -n 16 python3 ./reproduce/intruder/intruder.py &&
 mpiexec -n 16 python3 ./reproduce/intruder/plot_intruder.py ./reproduce/intruder/intruder_snapshots/*.h5 --output ./reproduce/intruder/intruder_frames &&
-ffmpeg -r 50 -i ./reproduce/intruder/intruder_frames/write_%06d.png ./reproduce/intruder/z_intruder.mp4
+ffmpeg -r 50 -i ./reproduce/intruder/intruder_frames/write_%06d.png ./reproduce/intruder/intruder.mp4
 
 
-ffmpeg -r 20 -i ./reproduce/intruder/intruder_frames/write_%06d.png ./reproduce/intruder/intruder.mp4
+ffmpeg -r 83 -i ./reproduce/intruder/intruder_frames/write_%06d.png ./reproduce/intruder/intruder_24.mp4
 
 mpiexec -n 16 python3 ./reproduce/intruder/plot_intruder.py ./reproduce/intruder/intruder_snapshots/*.h5 --output ./reproduce/intruder/intruder_frames
 
 
 Stitching two mp4s together:
-    - ffmpeg -i ./reproduce/intruder/intruder_original.mp4 -i ./reproduce/intruder/intruder_24.mp4 -filter_complex hstack ./reproduce/intruder/all_cyclones.mp4
+    - ffmpeg -i ./reproduce/intruder/intruder_original.mp4 -i ./reproduce/intruder/intruder_24.mp4 -filter_complex hstack ./reproduce/intruder/both_intruders_orig_24.mp4
 
 """
 

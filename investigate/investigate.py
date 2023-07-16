@@ -2,19 +2,14 @@
 
 mpiexec -n 16 python3 ./investigate/investigate.py &&
 mpiexec -n 16 python3 ./investigate/plot_investigate.py ./investigate/investigate_snapshots/*.h5 --output ./investigate/investigate_frames &&
-ffmpeg -r 50 -i ./investigate/investigate_frames/write_%06d.png ./investigate/z_investigate.mp4
-
-
-ffmpeg -r 20 -i ./investigate/investigate_frames/write_%06d.png ./investigate/investigate.mp4
-
-mpiexec -n 16 python3 ./investigate/plot_investigate.py ./investigate/investigate_snapshots/*.h5 --output ./investigate/investigate_frames
+ffmpeg -r 40 -i ./investigate/investigate_frames/write_%06d.png ./investigate/longitude_90.mp4
 
 """
 
 
 import numpy as np
 import dedalus.public as d3
-import logging
+import logging 
 logger = logging.getLogger(__name__)
 
 import pdb
@@ -39,7 +34,7 @@ dtype = np.float64
 
 # Length of simulation (days)
 stop_sim_time = 500
-printout = 0.1
+printout = 0.25
  
 # Planetary Configurations
 R = 71.4e6 * meter           
@@ -112,8 +107,8 @@ phi00 = phi0 * second**2 / meter**2
 #----------------------------------------
 
 # South pole coordinates
-south_lat = [88.6, 83.7, 84.3, 85.0, 84.1, 83.2]
-south_long = [211.3, 157.1, 94.3, 13.4, 298.8, 229.7]
+south_lat = [88.6, 83.7, 84.3, 85.0, 84.1, 83.2, 75]
+south_long = [211.3, 157.1, 94.3, 13.4, 298.8, 229.7, 90]
 
 # Convert longitude and latitude inputs into x,y coordinates
 def conversion(lat, lon):

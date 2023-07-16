@@ -1,11 +1,19 @@
 """
+Plot planes from joint analysis files.
+
+Usage:
+    plot_snapshots.py <files>... [--output=<dir>]
+
+Options:
+    --output=<dir>  Output directory [default: ./frames]
+
 
 mpiexec -n 16 python3 ./investigate/investigate.py &&
 mpiexec -n 16 python3 ./investigate/plot_investigate.py ./investigate/investigate_snapshots/*.h5 --output ./investigate/investigate_frames &&
 ffmpeg -r 50 -i ./investigate/investigate_frames/write_%06d.png ./investigate/z_investigate.mp4
 
 
-ffmpeg -r 20 -i ./investigate/investigate_frames/write_%06d.png ./investigate/investigate.mp4
+ffmpeg -r 40 -i ./investigate/investigate_frames/write_%06d.png ./investigate/investigate.mp4
 
 mpiexec -n 16 python3 ./investigate/plot_investigate.py ./investigate/investigate_snapshots/*.h5 --output ./investigate/investigate_frames
 
