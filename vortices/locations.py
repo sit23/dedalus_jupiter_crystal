@@ -7,7 +7,7 @@ import pdb
 meter = 1 / 69.911e6
 
 # Numerical Parameters
-Lx, Lz = 1, 1
+Lx, Lz = 0.7, 0.7
 
 # Radius of vortex (km)
 rm = 1e6 * meter
@@ -21,8 +21,8 @@ R = 69.911e6 * meter
 #------------------------------------
 
 # South pole coordinates
-south_lat = [88.6, 83.7, 84.3, 85.0, 84.1, 83.2]
-south_long = [211.3, 157.1, 94.3, 13.4, 298.8, 229.7]
+south_lat = [88.6, 83.7, 84.3, 85.0, 84.1, 83.2, 70]
+south_long = [211.3, 157.1, 94.3, 13.4, 298.8, 229.7, 0]
 
 # North pole coordinates
 north_lat =[89.6, 82.9, 83.8, 82.0, 83.2, 82.9, 83.2, 82.3, 83.5]
@@ -82,4 +82,4 @@ for i in range(len(coords_north)):
     plt.gca().add_patch(circle)
 
 plt.title('North Pole Vortices')
-plt.show()
+plt.savefig('./vortices/vortices.png')

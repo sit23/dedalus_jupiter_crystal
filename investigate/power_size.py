@@ -2,7 +2,7 @@
 
 mpiexec -n 16 python3 ./investigate/power_size.py &&
 mpiexec -n 16 python3 ./investigate/plot_investigate.py ./investigate/investigate_snapshots/*.h5 --output ./investigate/investigate_frames &&
-ffmpeg -r 40 -i ./investigate/investigate_frames/write_%06d.png ./investigate/intruder_test.mp4
+ffmpeg -r 40 -i ./investigate/investigate_frames/write_%06d.png ./investigate/size_2e6.mp4
 
 
 """
@@ -26,7 +26,7 @@ hour = day / 24
 second = hour / 3600
 
 # Numerical Parameters
-Lx, Lz = 0.7, 0.7
+Lx, Lz = 0.7, 0.7               # x,y = (0,0) to be ~70 lat
 Nx, Nz = 512, 512
 dealias = 3/2                   
 timestepper = d3.RK222
@@ -134,17 +134,18 @@ for i in range(len(south_lat)):
 #--------------------------------------
 
 ## maybe play around with steepness parameter too?
-## need to adjust system to not rely on Rossby number
 
 # intruder start location
 lat_int = 75
 long_int = 0
 
 # intruder size
-rm_int= 1e6 * meter
+rm_int= 2e6 * meter
 
-# intruder strength
-vm_int= Ro * f0 * rm 
+# intruder velocity
+intruder_velocity = 80.04
+vm_int= intruder_velocity * meter / second 
+
 
 # convert parameters to cartesian like above
 xx_int, yy_int = conversion(lat_int, long_int)
