@@ -1,8 +1,8 @@
 """
 
-mpiexec -n 16 python3 ./investigate/investigate.py &&
+mpiexec -n 16 python3 ./investigate/power_size.py &&
 mpiexec -n 16 python3 ./investigate/plot_investigate.py ./investigate/investigate_snapshots/*.h5 --output ./investigate/investigate_frames &&
-ffmpeg -r 40 -i ./investigate/investigate_frames/write_%06d.png ./investigate/longitude_270.mp4
+ffmpeg -r 40 -i ./investigate/investigate_frames/write_%06d.png ./investigate/intruder_test.mp4
 
 
 """
@@ -26,7 +26,7 @@ hour = day / 24
 second = hour / 3600
 
 # Numerical Parameters
-Lx, Lz = 1, 1
+Lx, Lz = 0.7, 0.7
 Nx, Nz = 512, 512
 dealias = 3/2                   
 timestepper = d3.RK222
@@ -104,12 +104,13 @@ phi00 = phi0 * second**2 / meter**2
 # pdb.set_trace()
 
 
+
 # Initial condition: South pole vortices
 #----------------------------------------
 
 # South pole coordinates
-south_lat = [88.6, 83.7, 84.3, 85.0, 84.1, 83.2, 75]
-south_long = [211.3, 157.1, 94.3, 13.4, 298.8, 229.7, 270]
+south_lat = [88.6, 83.7, 84.3, 85.0, 84.1, 83.2]
+south_long = [211.3, 157.1, 94.3, 13.4, 298.8, 229.7]
 
 # Convert longitude and latitude inputs into x,y coordinates
 def conversion(lat, lon):
@@ -126,6 +127,33 @@ for i in range(len(south_lat)):
     # Overide u,v components in velocity field
     u['g'][0] += - vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (y-yy[i]) / ( r + 1e-16 ) )
     u['g'][1] += vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (x-xx[i]) / ( r + 1e-16 ) )   
+
+
+
+# Initial condition: Intruder settings
+#--------------------------------------
+
+## maybe play around with steepness parameter too?
+## need to adjust system to not rely on Rossby number
+
+# intruder start location
+lat_int = 75
+long_int = 0
+
+# intruder size
+rm_int= 1e6 * meter
+
+# intruder strength
+vm_int= Ro * f0 * rm 
+
+# convert parameters to cartesian like above
+xx_int, yy_int = conversion(lat_int, long_int)
+r_int = np.sqrt( (x-xx_int)**2 + (y-yy_int)**2 )
+
+# Overide u,v components in velocity field
+u['g'][0] += - vm_int * ( r_int / rm_int ) * np.exp( (1/b) * ( 1 - ( r_int / rm_int )**b ) ) * ( (y-yy_int) / ( r_int + 1e-16 ) )
+u['g'][1] += vm_int * ( r_int / rm_int ) * np.exp( (1/b) * ( 1 - ( r_int / rm_int )**b ) ) * ( (x-xx_int) / ( r_int + 1e-16 ) )  
+
                         
 
 
