@@ -91,7 +91,7 @@ rm = 1e6 * meter                                     # Radius of vortex (km)
 vm = Ro * f0 * rm                                    # Calculate speed with Ro
 
 # Calculate deformation radius with Burger number
-H = 5e5 * meter 
+H = 5e4 * meter 
 phi = g * (h + H) 
 
 # Calculate Burger Number -- Currently Bu ~ 10
@@ -132,9 +132,9 @@ solver.solve()
 
 gamma = sc.gammainc( 2/b, (1/b) * (r/rm)**b ) 
 
-phi = phi0 * (Ro/Bu) * np.exp(1/b) * b**( (2/b) - 1) * gamma 
+phi_li = phi0 * (Ro/Bu) * np.exp(1/b) * b**( (2/b) - 1) * gamma 
 
-phii = phi - np.sum(phi)
+phi_lii = phi_li - np.sum(phi_li)
 
 hh = h['g']
 hhg = hh * g
