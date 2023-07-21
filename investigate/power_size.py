@@ -2,7 +2,7 @@
 
 mpiexec -n 16 python3 ./investigate/power_size.py &&
 mpiexec -n 16 python3 ./investigate/plot_investigate.py ./investigate/investigate_snapshots/*.h5 --output ./investigate/investigate_frames &&
-ffmpeg -r 40 -i ./investigate/investigate_frames/write_%06d.png ./investigate/size_2e6.mp4
+ffmpeg -r 40 -i ./investigate/investigate_frames/write_%06d.png ./investigate/size_0p5e6.mp4
 
 
 """
@@ -140,7 +140,7 @@ lat_int = 75
 long_int = 0
 
 # intruder size
-rm_int= 2e6 * meter
+rm_int= 0.5e6 * meter
 
 # intruder velocity
 intruder_velocity = 80.04
