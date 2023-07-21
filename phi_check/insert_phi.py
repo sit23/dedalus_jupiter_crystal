@@ -1,45 +1,53 @@
 """
 
-mpiexec -n 16 python3 ./phi_check/phi.py &&
+mpiexec -n 16 python3 ./phi_check/insert_phi.py &&
 mpiexec -n 16 python3 ./phi_check/plot_phi.py ./phi_check/phi_snapshots/*.h5 --output ./phi_check/phi_frames &&
-ffmpeg -r 50 -i ./phi_check/phi_frames/write_%06d.png ./phi_check/z_phi.mp4
+ffmpeg -r 40 -i ./phi_check/phi_frames/write_%06d.png ./phi_check/phi_li.mp4 
+
+
+
+RUN TIME ERROR - PERHAPS TRY MAKE NEW SCRIPT BUT JUST CHANGE h
+- insert h into loop for phi (and don't change SW equations)
 
 """
 
 
 import numpy as np
 import dedalus.public as d3
-import logging
+import scipy.special as sc
+
+import logging 
 logger = logging.getLogger(__name__)
 
 import pdb
-import scipy.special as sc
+
 
 # Parameters
 #------------
 
 # Simulation units
 meter = 1 / 71.4e6
-hour = 1
+day = 1
+hour = day / 24
 second = hour / 3600
 
 # Numerical Parameters
-Lx, Lz = 1, 1
+Lx, Lz = 0.7, 0.7               # x,y = (0,0) to be ~70 lat
 Nx, Nz = 512, 512
 dealias = 3/2                   
 timestepper = d3.RK222
 max_timestep = 1e-2
 dtype = np.float64
 
-# Length of simulation
-days = 50
-stop_sim_time = 24 * days
-printout = 1
+# Length of simulation (days)
+stop_sim_time = 10
+printout = 0.25
  
 # Planetary Configurations
-R = 71.4e6 * meter           
+R = 71.4e6 * meter     
+H = 5e4 * meter
 Omega = 1.74e-4 / second            
-nu = 1e5 * meter**2 / second / 32**2
+nu = 1e2 * meter**2 / second / 32**2 
 g = 24.79 * meter / second**2
 
 
@@ -55,7 +63,7 @@ xbasis = d3.RealFourier(coords['x'], size=Nx, bounds=(-Lx/2, Lx/2), dealias=deal
 ybasis = d3.RealFourier(coords['y'], size=Nz, bounds=(-Lz/2, Lz/2), dealias=dealias)
 
 # Fields both functions of x,y
-h = dist.Field(name='h', bases=(xbasis,ybasis))
+phi = dist.Field(name='phi', bases=(xbasis,ybasis))
 u = dist.VectorField(coords, name='u', bases=(xbasis,ybasis))
 
 # Substitutions
@@ -76,10 +84,10 @@ coscolat['g'] = np.cos(np.sqrt((x)**2. + (y)**2) / R)
 #-----------------------
 
 # Steepness parameter
-b = 4.5
+b = 1.5
 
 # Rossby Number
-Ro = 0.2
+Ro = 0.23
 
 
 # Dependent variables
@@ -90,55 +98,60 @@ f0 = 2 * Omega                                       # Planetary vorticity
 rm = 1e6 * meter                                     # Radius of vortex (km)
 vm = Ro * f0 * rm                                    # Calculate speed with Ro
 
-# Calculate deformation radius with Burger number
-H = 5e4 * meter 
-phi = g * (h + H) 
 
 # Calculate Burger Number -- Currently Bu ~ 10
 phi0 = g*H
 Bu = phi0 / (f0 * rm)**2 
 
-# Deformation radius
-Ld = np.sqrt(phi0) / f0 / meter 
-
+# Check phi0 dimensionalised
 phi00 = phi0 * second**2 / meter**2
 # pdb.set_trace()
 
 
-# Initial condition: singular vortex
-#-------------------------------------
+# Initial condition: South pole vortices
+#----------------------------------------
 
-r = np.sqrt( (x)**2 + (y)**2 )
+# South pole coordinates
+south_lat = [88.6, 83.7, 84.3, 85.0, 84.1, 83.2]
+south_long = [211.3, 157.1, 94.3, 13.4, 298.8, 229.7]
 
-# Overide u,v components in velocity field
-u['g'][0] += - vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (y) / ( r + 1e-16 ) )
-u['g'][1] += vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (x) / ( r + 1e-16 ) )                         
+# Convert longitude and latitude inputs into x,y coordinates
+def conversion(lat, lon):
+    lat, lon = np.deg2rad(lat), np.deg2rad(lon)
+    x = R * np.cos(lat) * np.cos(lon)
+    y = R * np.cos(lat) * np.sin(lon)
+    return x, y
+
+
+for i in range(len(south_lat)):
+
+    xx,yy = conversion(south_lat, south_long)
+    r = np.sqrt( (x-xx[i])**2 + (y-yy[i])**2 )
+
+    # Overide u,v components in velocity field
+    u['g'][0] += - vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (y-yy[i]) / ( r + 1e-16 ) )
+    u['g'][1] += vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (x-xx[i]) / ( r + 1e-16 ) )    
+
+    # li paper phi calculation
+    gamma = sc.gammainc( 2/b, (1/b) * (r/rm)**b ) 
+
+    phi['g'] += phi0 * (1 - (Ro/Bu) * np.exp(1/b) * b**( (2/b) - 1) * gamma )
+
+
+# pdb.set_trace()
+
+                        
 
 
 # Initial condition: height
 #---------------------------
-c = dist.Field(name='c')
-problem = d3.LBVP([h, c], namespace=locals())
-problem.add_equation("g*lap(h) + c = - div(u@grad(u) + 2*Omega*coscolat*zcross(u))")
-problem.add_equation("integ(h) = 0")
-solver = problem.build_solver()
-solver.solve()
+# c = dist.Field(name='c')
+# problem = d3.LBVP([h, c], namespace=locals())
+# problem.add_equation("g*lap(h) + c = - div(u@grad(u) + 2*Omega*coscolat*zcross(u))")
+# problem.add_equation("integ(h) = 0")
+# solver = problem.build_solver()
+# solver.solve()
 
-#-----------------------------------------------------------------------------------------------------------------
-
-#-------------
-# COMPARE PHI
-#-------------
-
-gamma = sc.gammainc( 2/b, (1/b) * (r/rm)**b ) 
-
-phi_li = phi0 * (Ro/Bu) * np.exp(1/b) * b**( (2/b) - 1) * gamma 
-
-phi_lii = phi_li - np.sum(phi_li)
-
-hh = h['g']
-hhg = hh * g
-pdb.set_trace()
 
 #-----------------------------------------------------------------------------------------------------------------
 
@@ -146,9 +159,9 @@ pdb.set_trace()
 #--------------------
 
 # Problem
-problem = d3.IVP([u, h], namespace=locals())
-problem.add_equation("dt(u) + nu*lap(lap(u)) + g*grad(h)  = - u@grad(u) - 2*Omega*coscolat*zcross(u)")
-problem.add_equation("dt(h) + nu*lap(lap(h)) + H*div(u) = - div(h*u)")
+problem = d3.IVP([u, phi], namespace=locals())
+problem.add_equation("dt(u) + nu*lap(lap(u)) + grad(phi)  = - u@grad(u) - 2*Omega*coscolat*zcross(u)")
+problem.add_equation("dt(phi) + nu*lap(lap(phi)) + phi0*div(u) = - div(phi*u)")
 solver = problem.build_solver(timestepper)
 solver.stop_sim_time = stop_sim_time 
 
@@ -159,16 +172,9 @@ solver.stop_sim_time = stop_sim_time
 # Set up and save snapshots
 snapshots = solver.evaluator.add_file_handler('./phi_check/phi_snapshots', sim_dt=printout, max_writes=10)
 
-# experiments/{}_{}d_Bu{}_b{}/merge_snapshots'.format(Nx, days, round(Bu), b)
-
-# add velocity field
-snapshots.add_task(h, name='height')
-snapshots.add_task(-d3.div(d3.skew(u)), name='vorticity')
+# add potential vorticity field
 snapshots.add_task((-d3.div(d3.skew(u)) + 2*Omega*coscolat) / phi, name='PV')
 
-snapshots.add_task(d3.dot(u,ex), name='u')
-snapshots.add_task(d3.dot(u,ey), name='v')
-snapshots.add_task(np.sqrt(d3.dot(u,ex)**2 + d3.dot(u,ey)**2), name='vortex')
 
 #-----------------------------------------------------------------------------------------------------------------
 
