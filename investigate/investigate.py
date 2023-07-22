@@ -128,8 +128,6 @@ for i in range(len(south_lat)):
     u['g'][1] += vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (x-xx[i]) / ( r + 1e-16 ) )   
                         
 
-pdb.set_trace()
-
 
 # Initial condition: height
 #---------------------------

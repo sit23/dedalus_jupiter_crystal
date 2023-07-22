@@ -1,9 +1,8 @@
 """
 
-
-mpiexec -n 16 python3 ./investigate/power_size.py &&
-mpiexec -n 16 python3 ./investigate/plot_investigate.py ./investigate/investigate_snapshots/*.h5 --output ./investigate/investigate_frames &&
-ffmpeg -r 40 -i ./investigate/investigate_frames/write_%06d.png ./investigate/size_1p5e6.mp4
+mpiexec -n 16 python3 ./tracer/tracer.py &&
+mpiexec -n 16 python3 ./tracer/plot_tracer.py ./tracer/tracer_snapshots/*.h5 --output ./tracer/tracer_frames &&
+ffmpeg -r 10 -i ./tracer/tracer_frames/write_%06d.png ./tracer/tracer_diffusion.mp4
 
 
 """
@@ -27,16 +26,16 @@ hour = day / 24
 second = hour / 3600
 
 # Numerical Parameters
-Lx, Lz = 0.7, 0.7               # x,y = (0,0) to be ~70 lat
+Lx, Lz = 1, 1
 Nx, Nz = 512, 512
 dealias = 3/2                   
-timestepper = d3.RK222 
+timestepper = d3.RK222
 max_timestep = 1e-2
 dtype = np.float64
 
 # Length of simulation (days)
-stop_sim_time = 500
-printout = 0.25
+stop_sim_time = 5
+printout = 0.1
  
 # Planetary Configurations
 R = 71.4e6 * meter           
@@ -70,6 +69,11 @@ zcross = lambda A: d3.skew(A)
 coscolat = dist.Field(name='coscolat', bases=(xbasis, ybasis))
 coscolat['g'] = np.cos(np.sqrt((x)**2. + (y)**2) / R)
 
+
+# introduce tracer term
+s = dist.Field(name='s', bases=(xbasis,ybasis))
+
+
 #-----------------------------------------------------------------------------------------------------------------
 
 # INITIAL CONDITIONS
@@ -100,11 +104,6 @@ phi = g * (h + H)
 phi0 = g*H
 Bu = phi0 / (f0 * rm)**2 
 
-# Check phi0 dimensionalised
-phi00 = phi0 * second**2 / meter**2
-# pdb.set_trace()
-
-
 
 # Initial condition: South pole vortices
 #----------------------------------------
@@ -130,33 +129,18 @@ for i in range(len(south_lat)):
     u['g'][1] += vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (x-xx[i]) / ( r + 1e-16 ) )   
 
 
+# Tracer
+#--------
 
-# Initial condition: Intruder settings
-#--------------------------------------
+PV = (-d3.div(d3.skew(u)) + 2*Omega*coscolat) / phi
 
-## maybe play around with steepness parameter too?
+pdb.set_trace()
 
-# intruder start location
-lat_int = 75
-long_int = 0
+# initial condition for tracer term
+s['g'] = (-d3.div(d3.skew(u)) + 2*Omega*coscolat) / phi 
 
-# intruder size
-rm_int= 1.75e6 * meter
+pdb.set_trace()
 
-# intruder velocity
-intruder_velocity = 80.04
-vm_int= intruder_velocity * meter / second 
-
-
-# convert parameters to cartesian like above
-xx_int, yy_int = conversion(lat_int, long_int)
-r_int = np.sqrt( (x-xx_int)**2 + (y-yy_int)**2 )
-
-# Overide u,v components in velocity field
-u['g'][0] += - vm_int * ( r_int / rm_int ) * np.exp( (1/b) * ( 1 - ( r_int / rm_int )**b ) ) * ( (y-yy_int) / ( r_int + 1e-16 ) )
-u['g'][1] += vm_int * ( r_int / rm_int ) * np.exp( (1/b) * ( 1 - ( r_int / rm_int )**b ) ) * ( (x-xx_int) / ( r_int + 1e-16 ) )  
-
-                        
 
 
 # Initial condition: height
@@ -169,15 +153,21 @@ solver = problem.build_solver()
 solver.solve()
 
 
+
 #-----------------------------------------------------------------------------------------------------------------
+
 
 # Problem and Solver
 #--------------------
 
+
 # Problem
-problem = d3.IVP([u, h], namespace=locals())
+problem = d3.IVP([u, h, s], namespace=locals())
 problem.add_equation("dt(u) + nu*lap(lap(u)) + g*grad(h)  = - u@grad(u) - 2*Omega*coscolat*zcross(u)")
 problem.add_equation("dt(h) + nu*lap(lap(h)) + H*div(u) = - div(h*u)")
+
+problem.add_equation("dt(s) - nu*lap(s) = - u@grad(s)") 
+
 solver = problem.build_solver(timestepper)
 solver.stop_sim_time = stop_sim_time 
 
@@ -186,10 +176,13 @@ solver.stop_sim_time = stop_sim_time
 #-----------
 
 # Set up and save snapshots
-snapshots = solver.evaluator.add_file_handler('./investigate/investigate_snapshots', sim_dt=printout, max_writes=10)
+snapshots = solver.evaluator.add_file_handler('./tracer/tracer_snapshots', sim_dt=printout, max_writes=10)
 
 # add potential vorticity field
 snapshots.add_task((-d3.div(d3.skew(u)) + 2*Omega*coscolat) / phi, name='PV')
+
+# add tracer task
+snapshots.add_task(s, name='tracer')
 
 
 #-----------------------------------------------------------------------------------------------------------------
