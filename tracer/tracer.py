@@ -2,7 +2,7 @@
 
 mpiexec -n 16 python3 ./tracer/tracer.py &&
 mpiexec -n 16 python3 ./tracer/plot_tracer.py ./tracer/tracer_snapshots/*.h5 --output ./tracer/tracer_frames &&
-ffmpeg -r 40 -i ./tracer/tracer_frames/write_%06d.png ./tracer/tracer.mp4
+ffmpeg -r 10 -i ./tracer/tracer_frames/write_%06d.png ./tracer/tracer_diffusion.mp4
 
 
 """
@@ -35,7 +35,7 @@ dtype = np.float64
 
 # Length of simulation (days)
 stop_sim_time = 5
-printout = 0.25
+printout = 0.1
  
 # Planetary Configurations
 R = 71.4e6 * meter           
@@ -68,6 +68,11 @@ zcross = lambda A: d3.skew(A)
 
 coscolat = dist.Field(name='coscolat', bases=(xbasis, ybasis))
 coscolat['g'] = np.cos(np.sqrt((x)**2. + (y)**2) / R)
+
+
+# introduce tracer term
+s = dist.Field(name='s', bases=(xbasis,ybasis))
+
 
 #-----------------------------------------------------------------------------------------------------------------
 
@@ -122,9 +127,20 @@ for i in range(len(south_lat)):
     # Overide u,v components in velocity field
     u['g'][0] += - vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (y-yy[i]) / ( r + 1e-16 ) )
     u['g'][1] += vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (x-xx[i]) / ( r + 1e-16 ) )   
-                        
 
-# pdb.set_trace()
+
+# Tracer
+#--------
+
+PV = (-d3.div(d3.skew(u)) + 2*Omega*coscolat) / phi
+
+pdb.set_trace()
+
+# initial condition for tracer term
+s['g'] = (-d3.div(d3.skew(u)) + 2*Omega*coscolat) / phi 
+
+pdb.set_trace()
+
 
 
 # Initial condition: height
@@ -137,30 +153,20 @@ solver = problem.build_solver()
 solver.solve()
 
 
-#-----------------------------------------------------------------------------------------------------------------
-
-# Tracer
-#--------
-
-# introduce tracer term
-s = dist.Field(name='s', bases=(xbasis,ybasis))
-
-# initial condition for tracer term
-s['g'] = (-d3.div(d3.skew(u)) + 2*Omega*coscolat) / phi 
-
 
 #-----------------------------------------------------------------------------------------------------------------
+
 
 # Problem and Solver
 #--------------------
 
 
 # Problem
-problem = d3.IVP([u, h], namespace=locals())
+problem = d3.IVP([u, h, s], namespace=locals())
 problem.add_equation("dt(u) + nu*lap(lap(u)) + g*grad(h)  = - u@grad(u) - 2*Omega*coscolat*zcross(u)")
 problem.add_equation("dt(h) + nu*lap(lap(h)) + H*div(u) = - div(h*u)")
 
-problem.add_equation("dt(s) = - u@grad(s)")
+problem.add_equation("dt(s) - nu*lap(s) = - u@grad(s)") 
 
 solver = problem.build_solver(timestepper)
 solver.stop_sim_time = stop_sim_time 

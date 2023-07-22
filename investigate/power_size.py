@@ -3,7 +3,7 @@
 
 mpiexec -n 16 python3 ./investigate/power_size.py &&
 mpiexec -n 16 python3 ./investigate/plot_investigate.py ./investigate/investigate_snapshots/*.h5 --output ./investigate/investigate_frames &&
-ffmpeg -r 40 -i ./investigate/investigate_frames/write_%06d.png ./investigate/size_0p5e6.mp4
+ffmpeg -r 40 -i ./investigate/investigate_frames/write_%06d.png ./investigate/size_1p5e6.mp4
 
 
 """
@@ -30,7 +30,7 @@ second = hour / 3600
 Lx, Lz = 0.7, 0.7               # x,y = (0,0) to be ~70 lat
 Nx, Nz = 512, 512
 dealias = 3/2                   
-timestepper = d3.RK222
+timestepper = d3.RK222 
 max_timestep = 1e-2
 dtype = np.float64
 
@@ -141,7 +141,7 @@ lat_int = 75
 long_int = 0
 
 # intruder size
-rm_int= 0.5e6 * meter
+rm_int= 1.75e6 * meter
 
 # intruder velocity
 intruder_velocity = 80.04
