@@ -1,8 +1,8 @@
 """
 
-mpiexec -n 16 python3 ./investigate/investigate.py &&
-mpiexec -n 16 python3 ./investigate/plot_investigate.py ./investigate/investigate_snapshots/*.h5 --output ./investigate/investigate_frames &&
-ffmpeg -r 40 -i ./investigate/investigate_frames/write_%06d.png ./investigate/longitude_270.mp4
+mpiexec -n 16 python3 ./tracer/tracer.py &&
+mpiexec -n 16 python3 ./tracer/plot_tracer.py ./tracer/tracer_snapshots/*.h5 --output ./tracer/tracer_frames &&
+ffmpeg -r 40 -i ./tracer/tracer_frames/write_%06d.png ./tracer/tracer.mp4
 
 
 """
@@ -34,7 +34,7 @@ max_timestep = 1e-2
 dtype = np.float64
 
 # Length of simulation (days)
-stop_sim_time = 500
+stop_sim_time = 5
 printout = 0.25
  
 # Planetary Configurations
@@ -99,17 +99,13 @@ phi = g * (h + H)
 phi0 = g*H
 Bu = phi0 / (f0 * rm)**2 
 
-# Check phi0 dimensionalised
-phi00 = phi0 * second**2 / meter**2
-# pdb.set_trace()
-
 
 # Initial condition: South pole vortices
 #----------------------------------------
 
 # South pole coordinates
-south_lat = [88.6, 83.7, 84.3, 85.0, 84.1, 83.2, 75]
-south_long = [211.3, 157.1, 94.3, 13.4, 298.8, 229.7, 270]
+south_lat = [88.6, 83.7, 84.3, 85.0, 84.1, 83.2]
+south_long = [211.3, 157.1, 94.3, 13.4, 298.8, 229.7]
 
 # Convert longitude and latitude inputs into x,y coordinates
 def conversion(lat, lon):
@@ -128,6 +124,8 @@ for i in range(len(south_lat)):
     u['g'][1] += vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (x-xx[i]) / ( r + 1e-16 ) )   
                         
 
+# pdb.set_trace()
+
 
 # Initial condition: height
 #---------------------------
@@ -141,13 +139,29 @@ solver.solve()
 
 #-----------------------------------------------------------------------------------------------------------------
 
+# Tracer
+#--------
+
+# introduce tracer term
+s = dist.Field(name='s', bases=(xbasis,ybasis))
+
+# initial condition for tracer term
+s['g'] = (-d3.div(d3.skew(u)) + 2*Omega*coscolat) / phi 
+
+
+#-----------------------------------------------------------------------------------------------------------------
+
 # Problem and Solver
 #--------------------
+
 
 # Problem
 problem = d3.IVP([u, h], namespace=locals())
 problem.add_equation("dt(u) + nu*lap(lap(u)) + g*grad(h)  = - u@grad(u) - 2*Omega*coscolat*zcross(u)")
 problem.add_equation("dt(h) + nu*lap(lap(h)) + H*div(u) = - div(h*u)")
+
+problem.add_equation("dt(s) = - u@grad(s)")
+
 solver = problem.build_solver(timestepper)
 solver.stop_sim_time = stop_sim_time 
 
@@ -156,10 +170,13 @@ solver.stop_sim_time = stop_sim_time
 #-----------
 
 # Set up and save snapshots
-snapshots = solver.evaluator.add_file_handler('./investigate/investigate_snapshots', sim_dt=printout, max_writes=10)
+snapshots = solver.evaluator.add_file_handler('./tracer/tracer_snapshots', sim_dt=printout, max_writes=10)
 
 # add potential vorticity field
 snapshots.add_task((-d3.div(d3.skew(u)) + 2*Omega*coscolat) / phi, name='PV')
+
+# add tracer task
+snapshots.add_task(s, name='tracer')
 
 
 #-----------------------------------------------------------------------------------------------------------------
