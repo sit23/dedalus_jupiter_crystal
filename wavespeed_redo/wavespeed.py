@@ -17,9 +17,9 @@ mpiexec -n 4 python3 ./wavespeed_redo/wavespeed.py &&
 mpiexec -n 4 python3 ./wavespeed_redo/ded_to_xarray.py
 
 
-
+mpiexec -n 4 python3 ./wavespeed_redo/wavespeed.py &&
 mpiexec -n 4 python3 ./wavespeed_redo/plot_wavespeed.py ./wavespeed_redo/wavespeed_snapshots/*.h5 --output ./wavespeed_redo/wavespeed_frames &&
-ffmpeg -r 10 -i ./wavespeed_redo/wavespeed_frames/write_%06d.png ./wavespeed_redo/wavespeed.mp4
+ffmpeg -r 20 -i ./wavespeed_redo/wavespeed_frames/write_%06d.png ./wavespeed_redo/wavespeed20.mp4 
 
 """
 
@@ -39,10 +39,13 @@ second = hour / 3600
 Lx, Lz = 2, 2                
 Nx, Nz = 256, 256                
 dealias = 3/2
-stop_sim_time = 20
 timestepper = d3.RK222
 max_timestep = 1e-2
 dtype = np.float64
+
+# Simulation length
+stop_sim_time = 20
+printout = 0.1
 
 R = 6.37122e6 * meter
 Omega = 7.292e-5 / second
@@ -52,14 +55,13 @@ H = 1e4 * meter
 
 
 # Bases
-coords = d3.CartesianCoordinates('x', 'y')                                                  # set up coordinates
+coords = d3.CartesianCoordinates('x', 'y')              
 dist = d3.Distributor(coords, dtype=dtype)                                                  
 xbasis = d3.RealFourier(coords['x'], size=Nx, bounds=(-Lx/2, Lx/2), dealias=dealias)
 ybasis = d3.RealFourier(coords['y'], size=Nz, bounds=(-Lz/2, Lz/2), dealias=dealias)
 
 
 # Fields both functions of x,y
-# vary in x,y dimensions (bases)
 h = dist.Field(name='h', bases=(xbasis,ybasis))
 u = dist.VectorField(coords, name='u', bases=(xbasis,ybasis))
 
@@ -69,18 +71,15 @@ u = dist.VectorField(coords, name='u', bases=(xbasis,ybasis))
 x, y = dist.local_grids(xbasis, ybasis)
 ex, ey = coords.unit_vector_fields(dist)
 
-zcross = lambda A: d3.skew(A) # 90deg rotation anticlockwise (positive)
+zcross = lambda A: d3.skew(A)
 
 coscolat = dist.Field(name='coscolat', bases=(xbasis, ybasis))
-coscolat['g'] = np.cos(np.sqrt((x)**2. + (y)**2) / R)                                       # ['g'] is shortcut for full grid
+coscolat['g'] = np.cos(np.sqrt((x)**2. + (y)**2) / R)
 
 
 # Problem
-## LHS must be first order in temporal derivatives and linear
-## RHS can be nonlinear and time-dependent terms but no temporal derivatives
 problem = d3.IVP([u, h], namespace=locals())
 problem.add_equation("dt(u) + nu*lap(lap(u)) + g*grad(h)  = - u@grad(u) - 2*Omega*coscolat*zcross(u)")
-# problem.add_equation("dt(u) + nu*lap(lap(u)) + g*grad(h)  = - u@grad(u)") #               # Simulate no rotation
 problem.add_equation("dt(h) + nu*lap(lap(h)) + H*div(u) = - div(h*u)")
 
 # Solver
@@ -100,19 +99,11 @@ hh = H + h
 
 
 # Analysis
-snapshots = solver.evaluator.add_file_handler('./wavespeed_redo/wavespeed_snapshots', sim_dt=0.1, max_writes=10)
+snapshots = solver.evaluator.add_file_handler('./wavespeed_redo/wavespeed_snapshots', sim_dt=printout, max_writes=10)
 
 
-#Add full fields - vorticity, height, PV and planetary vorticity
-snapshots.add_task(hh, name='height') 
-snapshots.add_task(-d3.div(d3.skew(u)), name='vorticity')                                           # Why negative? - write out skew and derive
-snapshots.add_task((2*Omega*coscolat-d3.div(d3.skew(u)))/hh, name='PV')
-snapshots.add_task((2*Omega*coscolat), name='plvort')
-
-
-#Add perturbation fields - i.e. full field minus initial values
+#Add perturbation height field
 snapshots.add_task(h, name='pheight')                                                               # perturbation height
-snapshots.add_task((2*Omega*coscolat-d3.div(d3.skew(u)))/hh - (2*Omega*coscolat)/H, name='pPV')     # perturbation PV - hh or h?
 
 
 # CFL

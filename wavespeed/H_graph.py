@@ -12,10 +12,13 @@ hour = 1
 second = hour / 3600
 g = 9.80616 * meter / second**2
 
+gg = 9.80616
+
 # Create array for H
 H_range = np.arange(0.1e4, 1.6e4, 0.1e4) * meter
+
 # Start arrays for true c and numerical c
-c_true = np.sqrt(g*H_range)
+c_true = np.sqrt(g * H_range)
 c_numeric = np.zeros(len(files))
 
 #----------------------------------------------------------------------------
