@@ -36,8 +36,8 @@ hour = 1
 second = hour / 3600
 
 # Numerical Parameters
-Lx, Lz = 1, 1                
-Nx, Nz = 128, 128                
+Lx, Lz = 2, 2                
+Nx, Nz = 256, 256                
 dealias = 3/2
 stop_sim_time = 20
 timestepper = d3.RK222
@@ -46,7 +46,7 @@ dtype = np.float64
 
 R = 6.37122e6 * meter
 Omega = 7.292e-5 / second
-nu = 1e5 * meter**2 / second / 32**2 
+nu = 1e2 * meter**2 / second / 32**2 
 g = 9.80616 * meter / second**2
 H = 1e4 * meter
 

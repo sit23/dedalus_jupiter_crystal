@@ -34,3 +34,6 @@ plt.title('Perturbation height field at x=0.0 as a function of y and time.')
 plt.savefig('./wavespeed_redo/pheight.png')
 
 #The slope of the lines on this plot will tell us about how fast the gravity wave travels, and therefore check it's working correctly.
+
+# save to net CDF file
+dataset.to_netcdf('./wavespeed_redo/wavespeed.nc') 
