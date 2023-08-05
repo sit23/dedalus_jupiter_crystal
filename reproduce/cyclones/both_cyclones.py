@@ -90,7 +90,7 @@ coscolat['g'] = np.cos(np.sqrt((x)**2. + (y)**2) / R)
 b = 1.5
 
 # Rossby Number
-Ro = 0.2
+Ro = 0.23
 
 # Dependent variables
 #---------------------
@@ -169,7 +169,7 @@ solver.stop_sim_time = stop_sim_time
 # Set up and save snapshots
 snapshots = solver.evaluator.add_file_handler('./reproduce/cyclones/both_snapshots', sim_dt=printout, max_writes=10)
 
-# add velocity field
+# add PV field
 snapshots.add_task((-d3.div(d3.skew(u)) + 2*Omega*coscolat) / phi, name='PV')
 
 #-----------------------------------------------------------------------------------------------------------------
