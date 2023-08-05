@@ -3,7 +3,7 @@
 
 mpiexec -n 16 python3 ./investigate/power_size.py &&
 mpiexec -n 16 python3 ./investigate/plot_investigate.py ./investigate/investigate_snapshots/*.h5 --output ./investigate/investigate_frames &&
-ffmpeg -r 40 -i ./investigate/investigate_frames/write_%06d.png ./investigate/size_1p5e6.mp4
+ffmpeg -r 40 -i ./investigate/investigate_frames/write_%06d.png ./investigate/b0p6_vm80.mp4
 
 
 """
@@ -134,17 +134,18 @@ for i in range(len(south_lat)):
 # Initial condition: Intruder settings
 #--------------------------------------
 
-## maybe play around with steepness parameter too?
+# steepness parameter
+b_int = 0.6
 
 # intruder start location
 lat_int = 75
 long_int = 0
 
 # intruder size
-rm_int= 1.75e6 * meter
+rm_int= 1e6 * meter
 
 # intruder velocity
-intruder_velocity = 80.04
+intruder_velocity = 80
 vm_int= intruder_velocity * meter / second 
 
 
@@ -153,8 +154,8 @@ xx_int, yy_int = conversion(lat_int, long_int)
 r_int = np.sqrt( (x-xx_int)**2 + (y-yy_int)**2 )
 
 # Overide u,v components in velocity field
-u['g'][0] += - vm_int * ( r_int / rm_int ) * np.exp( (1/b) * ( 1 - ( r_int / rm_int )**b ) ) * ( (y-yy_int) / ( r_int + 1e-16 ) )
-u['g'][1] += vm_int * ( r_int / rm_int ) * np.exp( (1/b) * ( 1 - ( r_int / rm_int )**b ) ) * ( (x-xx_int) / ( r_int + 1e-16 ) )  
+u['g'][0] += - vm_int * ( r_int / rm_int ) * np.exp( (1/b_int) * ( 1 - ( r_int / rm_int )**b_int ) ) * ( (y-yy_int) / ( r_int + 1e-16 ) ) 
+u['g'][1] += vm_int * ( r_int / rm_int ) * np.exp( (1/b_int) * ( 1 - ( r_int / rm_int )**b_int ) ) * ( (x-xx_int) / ( r_int + 1e-16 ) )   
 
                         
 
