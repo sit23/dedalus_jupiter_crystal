@@ -6,13 +6,11 @@ import glob
 # Call ordered files from directory
 files = sorted(glob.glob('./wavespeed/Experiment 1/*.nc'))
 
-# Is it possible to save g and H into the xarray??
+# Non-dimensionalise parameters
 meter = 1 / 6.37122e6
 hour = 1
 second = hour / 3600
 g = 9.80616 * meter / second**2
-
-gg = 9.80616
 
 # Create array for H
 H_range = np.arange(0.1e4, 1.6e4, 0.1e4) * meter
@@ -77,24 +75,11 @@ plt.ylabel(r'$c$')
 plt.legend(loc='upper left')
 plt.title('True and numerical wavespeed against equilibrium height')
 
-# difference plot
-#------------------
 
-difference = abs(c_numeric - c_true)
+# Percentage error plot
+#-----------------------
 
-# plt.subplot(1, 2, 2)
-# plt.plot(H_range, difference, color='firebrick')
-# plt.ylim(bottom=0)
-# plt.xticks(H_range, xticks)
-# plt.xlabel(r'$H (10^4)$')
-# plt.ylabel('Difference')
-# plt.title('Difference plot of true vs numerical results')
-# plt.savefig('H_exp1.pdf')
-
-
-# Percentage error
-#------------------
-
+difference = abs(c_true - c_numeric)
 percentage_error = (difference / c_true) * 100
 
 plt.subplot(1, 2, 2)
