@@ -7,12 +7,6 @@ Usage:
 Options:
     --output=<dir>  Output directory [default: ./frames]
 
-
-python3 ./reproduce/merge/delete_merge.py &&
-mpiexec -n 4 python3 ./reproduce/merge/merge.py &&
-mpiexec -n 4 python3 ./reproduce/merge/plot_merge.py ./reproduce/merge/merge_snapshots/*.h5 --output ./reproduce/merge/merge_frames &&
-ffmpeg -r 50 -i ./reproduce/merge/merge_frames/write_%06d.png ./reproduce/merge/z_merge.mp4
-
 """
 
 import h5py
@@ -29,14 +23,14 @@ def main(filename, start, count, output):
     """Save plot of specified tasks for given range of analysis writes."""
 
     # Plot settings
-    tasks = ['u', 'v', 'vortex', 'vorticity', 'PV', 'height']
+    tasks = ['PV', 'vorticity']
     scale = 2
     dpi = 200
     title_func = lambda sim_time: 't = {:.3f}'.format(sim_time)
     savename_func = lambda write: 'write_{:06}.png'.format(write)
 
     # Layout
-    nrows, ncols = 2, 3
+    nrows, ncols = 2,1
     image = plot_tools.Box(1, 1)
     pad = plot_tools.Frame(0.2, 0, 0, 0)
     margin = plot_tools.Frame(0.2, 0.1, 0, 0)

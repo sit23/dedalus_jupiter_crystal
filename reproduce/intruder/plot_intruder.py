@@ -7,15 +7,6 @@ Usage:
 Options:
     --output=<dir>  Output directory [default: ./frames]
 
-
-python3 ./reproduce/intruder/delete_intruder.py &&
-mpiexec -n 16 python3 ./reproduce/intruder/intruder.py &&
-mpiexec -n 16 python3 ./reproduce/intruder/plot_intruder.py ./reproduce/intruder/intruder_snapshots/*.h5 --output ./reproduce/intruder/intruder_frames &&
-ffmpeg -r 50 -i ./reproduce/intruder/intruder_frames/write_%06d.png ./reproduce/intruder/z_intruder.mp4
-
-
-ffmpeg -r 50 -i ./reproduce/intruder/intruder_frames/write_%06d.png ./reproduce/intruder/intruder_subset.mp4
-
 """
 
 import h5py

@@ -1,9 +1,8 @@
 """
 
-python3 ./reproduce/merge/delete_merge.py &&
 mpiexec -n 16 python3 ./reproduce/merge/merge.py &&
 mpiexec -n 16 python3 ./reproduce/merge/plot_merge.py ./reproduce/merge/merge_snapshots/*.h5 --output ./reproduce/merge/merge_frames &&
-ffmpeg -r 50 -i ./reproduce/merge/merge_frames/write_%06d.png ./reproduce/merge/z_merge.mp4
+ffmpeg -r 20 -i ./reproduce/merge/merge_frames/write_%06d.png ./reproduce/merge/merge_nu1e2.mp4
 
 """
 
@@ -18,8 +17,9 @@ import pdb
 #------------
 
 # Simulation units
-meter = 1 / 69.911e6
-hour = 1
+meter = 1 / 71.4e6
+day = 1
+hour = day / 24
 second = hour / 3600
 
 # Numerical Parameters
@@ -31,14 +31,13 @@ max_timestep = 1e-2
 dtype = np.float64
 
 # Length of simulation
-days = 50
-stop_sim_time = 24 * days
-printout = 1
+stop_sim_time = 50
+printout = 0.2
  
 # Planetary Configurations
-R = 69.911e6 * meter           
+R = 71.4e6 * meter           
 Omega = 1.76e-4 / second            
-nu = 1e5 * meter**2 / second / 32**2   
+nu = 1e2 * meter**2 / second / 32**2   
 g = 24.79 * meter / second**2
 
 
@@ -78,7 +77,7 @@ coscolat['g'] = np.cos(np.sqrt((x)**2. + (y)**2) / R)
 b = 1.5
 
 # Rossby Number
-Ro = 0.2
+Ro = 0.23
 
 
 # Dependent variables
@@ -101,7 +100,7 @@ Bu = phi0 / (f0 * rm)**2
 Ld = np.sqrt(phi0) / f0 / meter 
 
 phi00 = phi0 * second**2 / meter**2
-pdb.set_trace()
+# pdb.set_trace()
 
 
 # Initial condition: south pole vortices
@@ -165,14 +164,11 @@ snapshots = solver.evaluator.add_file_handler('./reproduce/merge/merge_snapshots
 
 # experiments/{}_{}d_Bu{}_b{}/merge_snapshots'.format(Nx, days, round(Bu), b)
 
-# add velocity field
-snapshots.add_task(h, name='height')
-snapshots.add_task(-d3.div(d3.skew(u)), name='vorticity')
+# add PV field
 snapshots.add_task((-d3.div(d3.skew(u)) + 2*Omega*coscolat) / phi, name='PV')
 
-snapshots.add_task(d3.dot(u,ex), name='u')
-snapshots.add_task(d3.dot(u,ey), name='v')
-snapshots.add_task(np.sqrt(d3.dot(u,ex)**2 + d3.dot(u,ey)**2), name='vortex')
+# add vorticity field
+snapshots.add_task( -d3.div(d3.skew(u)) , name='vorticity')
 
 #-----------------------------------------------------------------------------------------------------------------
 

@@ -7,11 +7,6 @@ Usage:
 Options:
     --output=<dir>  Output directory [default: ./frames]
 
-
-mpiexec -n 4 python3 ./vortices/plot_vortex.py ./vortices/vortex_snapshots/*.h5 --output ./vortices/vortex_frames
-
-ffmpeg -r 10 -i ./vortices/vortex_frames/write_%06d.png ./vortices/z_vortex.mp4
-
 """
 
 import h5py
@@ -28,15 +23,14 @@ def main(filename, start, count, output):
     """Save plot of specified tasks for given range of analysis writes."""
 
     # Plot settings
-    tasks = ['u', 'v']
-    # tasks = ['u', 'v', 'vortex', 'vorticity', 'PV', 'height']
+    tasks = ['u', 'v', 'PV']
     scale = 2
     dpi = 200
     title_func = lambda sim_time: 't = {:.3f}'.format(sim_time)
     savename_func = lambda write: 'write_{:06}.png'.format(write)
 
     # Layout
-    nrows, ncols = 1, 2
+    nrows, ncols = 1, 3
     image = plot_tools.Box(1, 1)
     pad = plot_tools.Frame(0.2, 0, 0, 0)
     margin = plot_tools.Frame(0.2, 0.1, 0, 0)

@@ -3,6 +3,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import glob
 
+import pdb
+
 # Call ordered files from directory
 files = sorted(glob.glob('./wavespeed/Experiment 1/*.nc'))
 

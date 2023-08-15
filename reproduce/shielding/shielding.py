@@ -24,6 +24,7 @@ import scipy.special as sc
 
 # Simulation units
 meter = 1 / 71.4e6
+day = 500
 hour = 1
 second = hour / 3600
 
@@ -36,14 +37,13 @@ max_timestep = 1e-2
 dtype = np.float64
 
 # Length of simulation
-days = 50
-stop_sim_time = 24 * days
-printout = 1
+stop_sim_time = 500
+printout = 0.25
  
 # Planetary Configurations
 R = 71.4e6 * meter           
 Omega = 1.74e-4 / second            
-nu = 1e0 * meter**2 / second / 32**2 
+nu = 1e2 * meter**2 / second / 32**2 
 g = 24.79 * meter / second**2
 
 
@@ -80,10 +80,10 @@ coscolat['g'] = np.cos(np.sqrt((x)**2. + (y)**2) / R)
 #-----------------------
 
 # Steepness parameter
-b = 2.5
+b = 1.5
 
 # Rossby Number
-Ro = 0.2
+Ro = 0.23
 
 
 # Dependent variables

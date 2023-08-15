@@ -1,14 +1,8 @@
 """
 
-python3 ./reproduce/intruder/delete_intruder.py &&
 mpiexec -n 16 python3 ./reproduce/intruder/intruder.py &&
 mpiexec -n 16 python3 ./reproduce/intruder/plot_intruder.py ./reproduce/intruder/intruder_snapshots/*.h5 --output ./reproduce/intruder/intruder_frames &&
-ffmpeg -r 50 -i ./reproduce/intruder/intruder_frames/write_%06d.png ./reproduce/intruder/intruder.mp4
-
-
-ffmpeg -r 83 -i ./reproduce/intruder/intruder_frames/write_%06d.png ./reproduce/intruder/intruder_24.mp4
-
-mpiexec -n 16 python3 ./reproduce/intruder/plot_intruder.py ./reproduce/intruder/intruder_snapshots/*.h5 --output ./reproduce/intruder/intruder_frames
+ffmpeg -r 120 -i ./reproduce/intruder/intruder_frames/write_%06d.png ./reproduce/intruder/intruder_h0.mp4
 
 
 Stitching two mp4s together:
@@ -35,7 +29,7 @@ hour = day / 24
 second = hour / 3600
 
 # Numerical Parameters
-Lx, Lz = 1, 1
+Lx, Lz = 0.7, 0.7
 Nx, Nz = 512, 512
 dealias = 3/2                   
 timestepper = d3.RK222
@@ -146,6 +140,10 @@ problem.add_equation("g*lap(h) + c = - div(u@grad(u) + 2*Omega*coscolat*zcross(u
 problem.add_equation("integ(h) = 0")
 solver = problem.build_solver()
 solver.solve()
+
+# Initial condition: perturbation
+#---------------------------------
+# h['g'] += ( np.random.rand(h['g'].shape[0], h['g'].shape[1]) - 0.5 ) * 1e-10
 
 
 #-----------------------------------------------------------------------------------------------------------------

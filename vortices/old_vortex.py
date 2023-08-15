@@ -1,19 +1,8 @@
 """
 
-To run and plot using e.g. 4 processes:
-    $ mpiexec -n 4 python3 ./vortices/vortex.py
-    $ mpiexec -n 4 python3 ./vortices/plot_vortex.py snapshots/*.h5
-    $ mpiexec -n 4 python3 ded_to_xarray.py
-
-
-To make FFmpeg video:
-    $ ffmpeg -r 10 -i ./vortices/vortex_frames/write_%06d.png ./vortices/z_vortex.mp4
-
-
-python3 ./vortices/delete_vortex.py &&
 mpiexec -n 4 python3 ./vortices/old_vortex.py &&
 mpiexec -n 4 python3 ./vortices/plot_vortex.py ./vortices/vortex_snapshots/*.h5 --output ./vortices/vortex_frames &&
-ffmpeg -r 20 -i ./vortices/vortex_frames/write_%06d.png ./vortices/z_vortex.mp4
+ffmpeg -r 15 -i ./vortices/vortex_frames/write_%06d.png ./vortices/rotation_all.mp4
 
 """
 
@@ -29,23 +18,26 @@ import pdb
 #------------
 
 # Simulation units
-meter = 1 / 69.911e6
+meter = 1 / 71.4e6
 hour = 1
 second = hour / 3600
 
 # Numerical Parameters
 Lx, Lz = 1, 1
-Nx, Nz = 128, 128
-dealias = 3/2                   
-stop_sim_time = 20
+Nx, Nz = 512, 512
+dealias = 3/2
 timestepper = d3.RK222
 max_timestep = 1e-2
 dtype = np.float64
 
+# Length of simulation (hours)
+stop_sim_time = 20
+printout = 0.1
+
 # Planetary Configurations
-R = 69.911e6 * meter           
+R = 71.4e6 * meter           
 Omega = 1.76e-4 / second            
-nu = 1e5 * meter**2 / second / 32**2   
+nu = 1e2 * meter**2 / second / 32**2   
 g = 24.79 * meter / second**2      
 H = 5e4 * meter                 
 
@@ -73,17 +65,17 @@ ex, ey = coords.unit_vector_fields(dist)
 
 
 # Set up basic operators
-zcross = lambda A: d3.skew(A) # 90deg rotation anticlockwise (positive)
+zcross = lambda A: d3.skew(A)
 
 coscolat = dist.Field(name='coscolat', bases=(xbasis, ybasis))
-coscolat['g'] = np.cos(np.sqrt((x)**2. + (y)**2) / R)                                       # ['g'] is shortcut for full grid
+coscolat['g'] = np.cos(np.sqrt((x)**2. + (y)**2) / R)  
 
 
 # INITIAL CONDITIONS
 
 # Parameters
-b = 1.5                                                # steepness parameter             
-rm = 1e6 * meter                                     # Radius of vortex (km)
+b = 1.5                                              # steepness parameter             
+rm = 3e6 * meter                                     # Radius of vortex (km)
 vm = 80 * meter / second                             # maximum velocity of vortex
 
 a = 0
@@ -94,8 +86,8 @@ r = np.sqrt((x-a)**2 + (y-a)**2)                     # radius
 #---------------------------
 
 # Overide u,v components in velocity field
-u['g'][0] = vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (x-a) / ( r + 1e-16 ) )
-u['g'][1] = vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (y-a) / ( r + 1e-16 ) )
+u['g'][0] += - vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (y-a) / ( r + 1e-16 ) )
+u['g'][1] += vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (x-a) / ( r + 1e-16 ) )
 
 
 
@@ -149,15 +141,12 @@ solver.stop_sim_time = stop_sim_time
 # Set up and save snapshots
 snapshots = solver.evaluator.add_file_handler('./vortices/vortex_snapshots', sim_dt=0.1, max_writes=10)
 
-# add velocity field
-snapshots.add_task(h, name='height')
-snapshots.add_task(zeta, name='vorticity')
+# add PV field
 snapshots.add_task((zeta + 2*Omega*coscolat) / (h+H), name='PV')
 
+# add velocity components to check direction of rotation
 snapshots.add_task(d3.dot(u,ex), name='u')
 snapshots.add_task(d3.dot(u,ey), name='v')
-
-snapshots.add_task(np.sqrt(d3.dot(u,ex)**2 + d3.dot(u,ey)**2), name='vortex')
 
 #--------------------------------------------------------------------------------------------
 

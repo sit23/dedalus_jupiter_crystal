@@ -1,8 +1,8 @@
 """
 
-mpiexec -n 4 python3 ./reproduce/cyclones/both_cyclones.py &&
-mpiexec -n 4 python3 ./reproduce/cyclones/plot_cyclones.py ./reproduce/cyclones/both_snapshots/*.h5 --output ./reproduce/cyclones/both_frames &&
-ffmpeg -r 50 -i ./reproduce/cyclones/both_frames/write_%06d.png ./reproduce/cyclones/both_cyclones.mp4
+mpiexec -n 16 python3 ./reproduce/cyclones/both_cyclones.py &&
+mpiexec -n 16 python3 ./reproduce/cyclones/plot_both.py ./reproduce/cyclones/both_snapshots/*.h5 --output ./reproduce/cyclones/both_frames &&
+ffmpeg -r 40 -i ./reproduce/cyclones/both_frames/write_%06d.png ./reproduce/cyclones/no_balanced_height.mp4
 
 Stitching two mp4s together:
     - ffmpeg -i ./reproduce/cyclones/z_cyclones1.mp4 -i ./reproduce/cyclones/z_anticyclones1.mp4 -filter_complex hstack ./reproduce/cyclones/all_cyclones.mp4
@@ -105,7 +105,13 @@ H = 5e4 * meter
 phi = g * (h + H)
 
 # Burger Number -- Currently Bu ~ 10
-Bu = phi / (f0 * rm)**2
+phi0 = g*H
+Bu = phi0 / (f0 * rm)**2
+
+# deformation radius
+Ld = np.sqrt(phi0) / f0
+
+pdb.set_trace()
 
 
 # Initial condition: off-centre cyclone
@@ -143,7 +149,7 @@ solver.solve()
 
 # Initial condition: perturbation
 #---------------------------------
-# h['g'] += ( np.random.rand(h['g'].shape[0], h['g'].shape[1]) - 0.5 ) * 1e-6
+# h['g'] += ( np.random.rand(h['g'].shape[0], h['g'].shape[1]) - 0.5 ) * 1e-10
 
 
 #-----------------------------------------------------------------------------------------------------------------
