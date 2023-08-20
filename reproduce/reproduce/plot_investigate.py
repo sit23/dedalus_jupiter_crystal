@@ -7,11 +7,6 @@ Usage:
 Options:
     --output=<dir>  Output directory [default: ./frames]
 
-
-mpiexec -n 16 python3 ./tracer/tracer.py &&
-mpiexec -n 16 python3 ./tracer/plot_tracer.py ./tracer/tracer_snapshots/*.h5 --output ./tracer/tracer_frames &&
-ffmpeg -r 40 -i ./tracer/tracer_frames/write_%06d.png ./tracer/tracer.mp4
-
 """
 
 import h5py
@@ -28,14 +23,14 @@ def main(filename, start, count, output):
     """Save plot of specified tasks for given range of analysis writes."""
 
     # Plot settings
-    tasks = ['PV', 'vorticity']
+    tasks = ['PV']
     scale = 2
     dpi = 200
     title_func = lambda sim_time: 't = {:.3f}'.format(sim_time)
     savename_func = lambda write: 'write_{:06}.png'.format(write)
 
     # Layout
-    nrows, ncols = 1,2
+    nrows, ncols = 1, 1
     image = plot_tools.Box(1, 1) 
     pad = plot_tools.Frame(0.2, 0, 0, 0) 
     margin = plot_tools.Frame(0.2, 0.1, 0, 0) 

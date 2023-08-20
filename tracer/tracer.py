@@ -1,8 +1,8 @@
 """
 
 mpiexec -n 16 python3 ./tracer/tracer.py &&
-mpiexec -n 16 python3 ./tracer/plot_tracer.py ./tracer/tracer_snapshots/*.h5 --output ./tracer/tracer_frames &&
-ffmpeg -r 10 -i ./tracer/tracer_frames/write_%06d.png ./tracer/tracer_diffusion.mp4
+mpiexec -n 16 python3 ./tracer/plot_tracer.py ./tracer/1e3_snapshots/*.h5 --output ./tracer/1e3_frames &&
+ffmpeg -r 40 -i ./tracer/1e3_frames/write_%06d.png ./tracer/diffusion_1e3.mp4
 
 
 """
@@ -26,7 +26,7 @@ hour = day / 24
 second = hour / 3600
 
 # Numerical Parameters
-Lx, Lz = 1, 1
+Lx, Lz = 0.7, 0.7
 Nx, Nz = 512, 512
 dealias = 3/2                   
 timestepper = d3.RK222
@@ -34,13 +34,13 @@ max_timestep = 1e-2
 dtype = np.float64
 
 # Length of simulation (days)
-stop_sim_time = 5
-printout = 0.1
+stop_sim_time = 500
+printout = 0.5
  
 # Planetary Configurations
 R = 71.4e6 * meter           
 Omega = 1.74e-4 / second            
-nu = 1e2 * meter**2 / second / 32**2 
+nu = 1e3 * meter**2 / second / 32**2 
 g = 24.79 * meter / second**2
 
 
@@ -132,14 +132,14 @@ for i in range(len(south_lat)):
 # Tracer
 #--------
 
-PV = (-d3.div(d3.skew(u)) + 2*Omega*coscolat) / phi
+# PV = (-d3.div(d3.skew(u)) + 2*Omega*coscolat) / phi
 
-pdb.set_trace()
+# pdb.set_trace()
 
-# initial condition for tracer term
-s['g'] = (-d3.div(d3.skew(u)) + 2*Omega*coscolat) / phi 
+# # initial condition for tracer term
+# s['g'] = (-d3.div(d3.skew(u)) + 2*Omega*coscolat) / phi 
 
-pdb.set_trace()
+# pdb.set_trace()
 
 
 
@@ -176,13 +176,14 @@ solver.stop_sim_time = stop_sim_time
 #-----------
 
 # Set up and save snapshots
-snapshots = solver.evaluator.add_file_handler('./tracer/tracer_snapshots', sim_dt=printout, max_writes=10)
+snapshots = solver.evaluator.add_file_handler('./tracer/1e3_snapshots', sim_dt=printout, max_writes=10)
 
-# add potential vorticity field
+# add potential vorticity field and vorticity
 snapshots.add_task((-d3.div(d3.skew(u)) + 2*Omega*coscolat) / phi, name='PV')
+snapshots.add_task(-d3.div(d3.skew(u)), name='vorticity')
 
 # add tracer task
-snapshots.add_task(s, name='tracer')
+# snapshots.add_task(s, name='tracer')
 
 
 #-----------------------------------------------------------------------------------------------------------------

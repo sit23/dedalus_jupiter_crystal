@@ -27,7 +27,7 @@ hour = day / 24
 second = hour / 3600
 
 # Numerical Parameters
-Lx, Lz = 0.7, 0.7               # x,y = (0,0) to be ~70 lat
+Lx, Lz = 0.7, 0.7         
 Nx, Nz = 512, 512
 dealias = 3/2                   
 timestepper = d3.RK222 
@@ -135,7 +135,7 @@ for i in range(len(south_lat)):
 #--------------------------------------
 
 # steepness parameter
-b_int = 0.6
+b_int = 1.5
 
 # intruder start location
 lat_int = 75
@@ -145,7 +145,7 @@ long_int = 0
 rm_int= 1e6 * meter
 
 # intruder velocity
-intruder_velocity = 80
+intruder_velocity = 100
 vm_int= intruder_velocity * meter / second 
 
 
@@ -157,7 +157,10 @@ r_int = np.sqrt( (x-xx_int)**2 + (y-yy_int)**2 )
 u['g'][0] += - vm_int * ( r_int / rm_int ) * np.exp( (1/b_int) * ( 1 - ( r_int / rm_int )**b_int ) ) * ( (y-yy_int) / ( r_int + 1e-16 ) ) 
 u['g'][1] += vm_int * ( r_int / rm_int ) * np.exp( (1/b_int) * ( 1 - ( r_int / rm_int )**b_int ) ) * ( (x-xx_int) / ( r_int + 1e-16 ) )   
 
-                        
+
+# Calculate intruder Rossby number
+Ro_int = vm_int / (f0 * rm_int)
+pdb.set_trace()
 
 
 # Initial condition: height

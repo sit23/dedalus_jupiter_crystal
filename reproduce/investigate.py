@@ -1,9 +1,11 @@
 """
 
-mpiexec -n 16 python3 ./investigate/investigate.py &&
-mpiexec -n 16 python3 ./investigate/plot_investigate.py ./investigate/investigate_snapshots/*.h5 --output ./investigate/investigate_frames &&
-ffmpeg -r 40 -i ./investigate/investigate_frames/write_%06d.png ./investigate/longitude_270.mp4
+mpiexec -n 16 python3 ./reproduce/investigate.py &&
+mpiexec -n 16 python3 ./reproduce/plot_investigate.py ./reproduce/z_h1e-10_snapshots/*.h5 --output ./reproduce/z_h1e-10_frames &&
+ffmpeg -r 40 -i ./reproduce/z_h1e-10_frames/write_%06d.png ./reproduce/h1e-10.mp4
 
+Stitching three mp4s together:
+    - ffmpeg -i ./reproduce/h0.mp4 -i ./reproduce/h1e-10.mp4 -filter_complex hstack ./reproduce/h0_h1e-10.mp4
 
 """
 
@@ -105,6 +107,10 @@ Bu = phi0 / (f0 * rm)**2
 
 # Check phi0 dimensionalised
 phi00 = phi0 * second**2 / meter**2
+
+# Deformation radius, L_d
+Ld = np.sqrt(phi0) / f0 / meter / 10**3
+
 # pdb.set_trace()
 
 
@@ -112,8 +118,8 @@ phi00 = phi0 * second**2 / meter**2
 #----------------------------------------
 
 # South pole coordinates
-south_lat = [88.6, 83.7, 84.3, 85.0, 84.1, 83.2, 75]
-south_long = [211.3, 157.1, 94.3, 13.4, 298.8, 229.7, 270]
+south_lat = [88.6, 83.7, 84.3, 85.0, 84.1, 83.2]
+south_long = [211.3, 157.1, 94.3, 13.4, 298.8, 229.7]
 
 # Convert longitude and latitude inputs into x,y coordinates
 def conversion(lat, lon):
@@ -142,6 +148,10 @@ problem.add_equation("integ(h) = 0")
 solver = problem.build_solver()
 solver.solve()
 
+# Initial condition: perturbation
+#---------------------------------
+# h['g'] += ( np.random.rand(h['g'].shape[0], h['g'].shape[1]) - 0.5 ) * 1e-10
+
 
 #-----------------------------------------------------------------------------------------------------------------
 
@@ -160,7 +170,7 @@ solver.stop_sim_time = stop_sim_time
 #-----------
 
 # Set up and save snapshots
-snapshots = solver.evaluator.add_file_handler('./investigate/investigate_snapshots', sim_dt=printout, max_writes=10)
+snapshots = solver.evaluator.add_file_handler('./reproduce/z_h1e-10_snapshots', sim_dt=printout, max_writes=10)
 
 # add potential vorticity field
 snapshots.add_task((-d3.div(d3.skew(u)) + 2*Omega*coscolat) / phi, name='PV')

@@ -2,7 +2,7 @@
 
 mpiexec -n 4 python3 ./vortices/old_vortex.py &&
 mpiexec -n 4 python3 ./vortices/plot_vortex.py ./vortices/vortex_snapshots/*.h5 --output ./vortices/vortex_frames &&
-ffmpeg -r 15 -i ./vortices/vortex_frames/write_%06d.png ./vortices/rotation_all.mp4
+ffmpeg -r 15 -i ./vortices/vortex_frames/write_%06d.png ./vortices/rotation_correct.mp4
 
 """
 
@@ -85,9 +85,9 @@ r = np.sqrt((x-a)**2 + (y-a)**2)                     # radius
 # Initial condition: vortex
 #---------------------------
 
-# Overide u,v components in velocity field
-u['g'][0] += - vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (y-a) / ( r + 1e-16 ) )
-u['g'][1] += vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (x-a) / ( r + 1e-16 ) )
+# Overide u,v components in velocity field. INCORRECT VERSION:
+u['g'][0] += vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (x-a) / ( r + 1e-16 ) )
+u['g'][1] += vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (y-a) / ( r + 1e-16 ) )
 
 
 

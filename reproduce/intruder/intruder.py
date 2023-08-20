@@ -2,11 +2,11 @@
 
 mpiexec -n 16 python3 ./reproduce/intruder/intruder.py &&
 mpiexec -n 16 python3 ./reproduce/intruder/plot_intruder.py ./reproduce/intruder/intruder_snapshots/*.h5 --output ./reproduce/intruder/intruder_frames &&
-ffmpeg -r 120 -i ./reproduce/intruder/intruder_frames/write_%06d.png ./reproduce/intruder/intruder_h0.mp4
+ffmpeg -r 120 -i ./reproduce/intruder/intruder_frames/write_%06d.png ./reproduce/intruder/intruder_h1e-8.mp4
 
 
 Stitching two mp4s together:
-    - ffmpeg -i ./reproduce/intruder/intruder_original.mp4 -i ./reproduce/intruder/intruder_24.mp4 -filter_complex hstack ./reproduce/intruder/both_intruders_orig_24.mp4
+    - ffmpeg -i ./reproduce/intruder/intruder_h0.mp4 -i ./reproduce/intruder/intruder_h1e-10.mp4 -filter_complex hstack ./reproduce/intruder/h0_h1e-10.mp4
 
 """
 
@@ -141,9 +141,12 @@ problem.add_equation("integ(h) = 0")
 solver = problem.build_solver()
 solver.solve()
 
+
 # Initial condition: perturbation
 #---------------------------------
-# h['g'] += ( np.random.rand(h['g'].shape[0], h['g'].shape[1]) - 0.5 ) * 1e-10
+h['g'] += ( np.random.rand(h['g'].shape[0], h['g'].shape[1]) - 0.5 ) * 1e-8
+
+
 
 
 #-----------------------------------------------------------------------------------------------------------------
