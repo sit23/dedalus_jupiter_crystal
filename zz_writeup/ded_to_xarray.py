@@ -1,6 +1,6 @@
 """
 
-mpiexec -n 4 python3 ./wavespeed_redo/ded_to_xarray.py
+python3 ./wavespeed_redo/ded_to_xarray.py
 
 """
 
@@ -34,7 +34,5 @@ dataset['pheight'][:,128,:].plot.contourf(levels=30, cmap='RdBu_r')
 plt.title('Perturbation height field at x=0')
 plt.savefig('./wavespeed_redo/pheight.png')
 
-# The slope of the lines on this plot will tell us about how fast the gravity wave travels, and therefore check it's working correctly.
-
 # save to net CDF file
-# dataset.to_netcdf('./wavespeed_redo/wavespeed20.nc') 
+dataset.to_netcdf('./wavespeed_redo/wavespeed20.nc') 

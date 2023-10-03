@@ -1,10 +1,11 @@
 """
 
+mpiexec -n 16 python3 ./reproduce/investigate.py &&
+mpiexec -n 16 python3 ./reproduce/plot_investigate.py ./reproduce/z_h1e-10_snapshots/*.h5 --output ./reproduce/z_h1e-10_frames &&
+ffmpeg -r 40 -i ./reproduce/z_h1e-10_frames/write_%06d.png ./reproduce/h1e-10.mp4
 
-mpiexec -n 16 python3 ./investigate/power_size.py &&
-mpiexec -n 16 python3 ./investigate/plot_investigate.py ./investigate/investigate_snapshots/*.h5 --output ./investigate/investigate_frames &&
-ffmpeg -r 40 -i ./investigate/investigate_frames/write_%06d.png ./investigate/b0p6_vm80.mp4
-
+Stitching three mp4s together:
+    - ffmpeg -i ./reproduce/h0.mp4 -i ./reproduce/h1e-10.mp4 -filter_complex hstack ./reproduce/h0_h1e-10.mp4
 
 """
 
@@ -27,10 +28,10 @@ hour = day / 24
 second = hour / 3600
 
 # Numerical Parameters
-Lx, Lz = 0.7, 0.7         
+Lx, Lz = 0.7, 0.7
 Nx, Nz = 512, 512
 dealias = 3/2                   
-timestepper = d3.RK222 
+timestepper = d3.RK222
 max_timestep = 1e-2
 dtype = np.float64
 
@@ -47,8 +48,7 @@ g = 24.79 * meter / second**2
 
 #-----------------------------------------------------------------------------------------------------------------
 
-# Dedalus set ups
-#-----------------
+# DEDALUS CONFIGURATIONS
 
 # Bases
 coords = d3.CartesianCoordinates('x', 'y')
@@ -64,15 +64,20 @@ u = dist.VectorField(coords, name='u', bases=(xbasis,ybasis))
 x, y = dist.local_grids(xbasis, ybasis)
 ex, ey = coords.unit_vector_fields(dist)
 
-# Set up basic operators
-zcross = lambda A: d3.skew(A)
-
-coscolat = dist.Field(name='coscolat', bases=(xbasis, ybasis))
-coscolat['g'] = np.cos(np.sqrt((x)**2. + (y)**2) / R)
 
 #-----------------------------------------------------------------------------------------------------------------
 
 # INITIAL CONDITIONS
+
+# Set up basic operators
+#------------------------
+
+# Horizontal cross product
+zcross = lambda A: d3.skew(A)
+
+# Set colatitude and convert theta to cartesian coordinates
+coscolat = dist.Field(name='coscolat', bases=(xbasis, ybasis))
+coscolat['g'] = np.cos(np.sqrt((x)**2. + (y)**2) / R)
 
 # Independent variables
 #-----------------------
@@ -102,8 +107,11 @@ Bu = phi0 / (f0 * rm)**2
 
 # Check phi0 dimensionalised
 phi00 = phi0 * second**2 / meter**2
-# pdb.set_trace()
 
+# Deformation radius, L_d
+Ld = np.sqrt(phi0) / f0 / meter / 10**3
+
+# pdb.set_trace()
 
 
 # Initial condition: South pole vortices
@@ -128,39 +136,7 @@ for i in range(len(south_lat)):
     # Overide u,v components in velocity field
     u['g'][0] += - vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (y-yy[i]) / ( r + 1e-16 ) )
     u['g'][1] += vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (x-xx[i]) / ( r + 1e-16 ) )   
-
-
-
-# Initial condition: Intruder settings
-#--------------------------------------
-
-# steepness parameter
-b_int = 1.5
-
-# intruder start location
-lat_int = 75
-long_int = 0
-
-# intruder size
-rm_int= 2e6 * meter
-
-# intruder velocity
-intruder_velocity = 80
-vm_int= intruder_velocity * meter / second 
-
-
-# convert parameters to cartesian like above
-xx_int, yy_int = conversion(lat_int, long_int)
-r_int = np.sqrt( (x-xx_int)**2 + (y-yy_int)**2 )
-
-# Overide u,v components in velocity field
-u['g'][0] += - vm_int * ( r_int / rm_int ) * np.exp( (1/b_int) * ( 1 - ( r_int / rm_int )**b_int ) ) * ( (y-yy_int) / ( r_int + 1e-16 ) ) 
-u['g'][1] += vm_int * ( r_int / rm_int ) * np.exp( (1/b_int) * ( 1 - ( r_int / rm_int )**b_int ) ) * ( (x-xx_int) / ( r_int + 1e-16 ) )   
-
-
-# Calculate intruder Rossby number
-Ro_int = vm_int / (f0 * rm_int)
-pdb.set_trace()
+                        
 
 
 # Initial condition: height
@@ -171,6 +147,10 @@ problem.add_equation("g*lap(h) + c = - div(u@grad(u) + 2*Omega*coscolat*zcross(u
 problem.add_equation("integ(h) = 0")
 solver = problem.build_solver()
 solver.solve()
+
+# Initial condition: perturbation
+#---------------------------------
+# h['g'] += ( np.random.rand(h['g'].shape[0], h['g'].shape[1]) - 0.5 ) * 1e-10
 
 
 #-----------------------------------------------------------------------------------------------------------------
@@ -190,7 +170,7 @@ solver.stop_sim_time = stop_sim_time
 #-----------
 
 # Set up and save snapshots
-snapshots = solver.evaluator.add_file_handler('./investigate/investigate_snapshots', sim_dt=printout, max_writes=10)
+snapshots = solver.evaluator.add_file_handler('./reproduce/z_h1e-10_snapshots', sim_dt=printout, max_writes=10)
 
 # add potential vorticity field
 snapshots.add_task((-d3.div(d3.skew(u)) + 2*Omega*coscolat) / phi, name='PV')
