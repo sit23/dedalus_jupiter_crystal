@@ -42,7 +42,7 @@ max_timestep = 1e-2
 dtype = np.float64
 
 # Length of simulation (days)
-stop_sim_time = 1.0
+stop_sim_time = 100.0
 printout = 0.1
  
 # Planetary Configurations
@@ -51,13 +51,10 @@ Omega = 1.74e-4 / second
 nu = 1e2 * meter**2 / second / 32**2 
 g = 24.79 * meter / second**2
 
-# energy injected at rate epsilon on a Gaussian ring N(kf, kfw) 
-epsilon = 0.001     
-kf = 2 * 14 * 2*np.pi/Lx
-kfw = 1.5 * 2*np.pi/Lx
-seed = None     
+#parameter for radiative damping
+inv_tau_rad = 1./10. #have made it the inverse of tau_rad so that tau_rad = infinity is easily done by setting inv_tau_rad = 0.0
 
-exp_name = 'example_intruder_phys_forcing_vortex_16_cores_sync_global_av3'
+exp_name = 'example_intruder_phys_forcing_vortex_16_cores_sync_global_av4_long_rad_damping'
 
 
 #-----------------------------------------------------------------------------------------------------------------
@@ -250,7 +247,7 @@ h['g'] += ( np.random.rand(h['g'].shape[0], h['g'].shape[1]) - 0.5 ) * 1e-8
 # Problem
 problem = d3.IVP([u, h], namespace=locals())
 problem.add_equation("dt(u) + nu*lap(lap(u)) + g*grad(h)  = - u@grad(u) - 2*Omega*coscolat*zcross(u)")
-problem.add_equation("dt(h) + nu*lap(lap(h)) + H*div(u) = - div(h*u) + Fh")
+problem.add_equation("dt(h) + nu*lap(lap(h)) + H*div(u) + h*inv_tau_rad = - div(h*u) + Fh")
 solver = problem.build_solver(timestepper)
 solver.stop_sim_time = stop_sim_time 
 
