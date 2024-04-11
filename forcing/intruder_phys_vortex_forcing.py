@@ -1,6 +1,6 @@
 """
 
-mpiexec -n 16 python3 intruder.py &&
+mpiexec -n 16 python3 intruder_phys_vortex_forcing.py &&
 mpiexec -n 16 python3 plot_intruder.py ./snapshots/intruder_forced_1_snapshots/*.h5 --output ./frames/intruder_frames &&
 ffmpeg -r 120 -i ./reproduce/intruder/intruder_frames/write_%06d.png ./reproduce/intruder/intruder_h1e-8.mp4
 
@@ -16,10 +16,14 @@ import dedalus.public as d3
 import logging
 import matplotlib.pyplot as plt
 logger = logging.getLogger(__name__)
+from mpi4py import MPI
 
 import pdb
 
-
+# Initialize MPI
+comm = MPI.COMM_WORLD
+rank = comm.Get_rank()  # Get the rank of the current process
+num_cores = comm.Get_size()
 # Parameters
 #------------
 
@@ -53,7 +57,7 @@ kf = 2 * 14 * 2*np.pi/Lx
 kfw = 1.5 * 2*np.pi/Lx
 seed = None     
 
-exp_name = 'example_intruder_phys_forcing_vortex'
+exp_name = 'example_intruder_phys_forcing_vortex_16_cores_sync_global_av3'
 
 
 #-----------------------------------------------------------------------------------------------------------------
@@ -75,6 +79,7 @@ u = dist.VectorField(coords, name='u', bases=(xbasis,ybasis))
 
 # Substitutions
 x, y = dist.local_grids(xbasis, ybasis)
+
 ex, ey = coords.unit_vector_fields(dist)
 
 # forcing
@@ -160,33 +165,46 @@ def vortex_forcing(model_time, phi0, storm_count, storm_time, storm_lat, storm_l
     h_width = 2.0
     h_width_dist_units = np.deg2rad(h_width)*R
 
-    if model_time == 0.0:
-        storm_count = 0
-        storm_strength = 0.0
-        storm_time[0] = storm_interval * 1.5
+    local_sum_of_forcing = np.array([0.], dtype='float64')
+    global_sum_of_forcing = np.array([0.], dtype='float64')
 
-        # Randomly generate storm location
-        storm_lon[0] = np.random.rand() * 360
-        temp_rand = np.random.rand()
-        # storm_lat[storm_count] = -(90. - 45. * np.arccos(2 * temp_rand - 1) / np.arctan(1.0))
-        storm_lat[0] = 80 + 10.*(np.random.rand()-0.5)  
+    if rank == 0:
 
-    elif (model_time - (storm_time[storm_count]-storm_length/2.)) >= storm_interval:
+        if model_time == 0.0:
+            storm_count = 0
+            storm_strength = 0.0
+            storm_time[0] = storm_interval * 1.5
 
-        # Update storm count
-        storm_count = (storm_count + 1) % 31
+            # Randomly generate storm location
+            storm_lon[0] = np.random.rand() * 360
+            temp_rand = np.random.rand()
+            # storm_lat[storm_count] = -(90. - 45. * np.arccos(2 * temp_rand - 1) / np.arctan(1.0))
+            storm_lat[0] = 80 + 10.*(np.random.rand()-0.5)  
 
-        # Set up future storm time
-        if storm_count == 0:
-            storm_time[storm_count] = storm_time[30] + storm_interval
-        else:
-            storm_time[storm_count] = storm_time[storm_count - 1] + storm_interval
+        elif (model_time - (storm_time[storm_count]-storm_length/2.)) >= storm_interval:
 
-        # Randomly generate storm location
-        storm_lon[storm_count] = np.random.rand() * 360
-        temp_rand = np.random.rand()
-        # storm_lat[storm_count] = -(90. - 45. * np.arccos(2 * temp_rand - 1) / np.arctan(1.0))
-        storm_lat[storm_count] = 80 + 10.*(np.random.rand()-0.5)            
+            # Update storm count
+            storm_count = (storm_count + 1) % 31
+
+            # Set up future storm time
+            if storm_count == 0:
+                storm_time[storm_count] = storm_time[30] + storm_interval
+            else:
+                storm_time[storm_count] = storm_time[storm_count - 1] + storm_interval
+
+            # Randomly generate storm location
+            storm_lon[storm_count] = np.random.rand() * 360
+            temp_rand = np.random.rand()
+            # storm_lat[storm_count] = -(90. - 45. * np.arccos(2 * temp_rand - 1) / np.arctan(1.0))
+            storm_lat[storm_count] = 80 + 10.*(np.random.rand()-0.5)            
+
+    try:
+        storm_time = comm.bcast(storm_time, root=0)
+        storm_lon = comm.bcast(storm_lon, root=0)    
+        storm_lat = comm.bcast(storm_lat, root=0)    
+        storm_count = comm.bcast(storm_count, root=0)     
+    except Exception as e:
+        print(f"MPI Exception: {e}")
 
     # Loop through potential storm times to apply effects
     for storm_count_i in range(31):
@@ -201,9 +219,12 @@ def vortex_forcing(model_time, phi0, storm_count, storm_time, storm_lat, storm_l
             dd = xx ** 2 + yy ** 2
             dt_hg_physical_forcing += storm_strength * np.exp(-dd) * np.exp(-tt)
 
-    # Remove the global mean of the injections
-    dt_hg_physical_forcing -= np.mean(dt_hg_physical_forcing)
-    
+    local_sum_of_forcing = np.array([np.sum(dt_hg_physical_forcing)])
+
+    comm.Allreduce([local_sum_of_forcing, MPI.DOUBLE], [global_sum_of_forcing, MPI.DOUBLE], op=MPI.SUM)
+
+    dt_hg_physical_forcing -= global_sum_of_forcing[0]/(dt_hg_physical_forcing.size*num_cores)
+
     return dt_hg_physical_forcing, storm_count, storm_time, storm_lat, storm_lon
 
 # Initial condition: height
@@ -277,7 +298,8 @@ try:
         if (solver.iteration-1) % 10 == 0:
             max_w = np.sqrt(flow.max('w2'))
             logger.info('Iteration=%i, Time=%e, dt=%e, max(w)=%f' %(solver.iteration, solver.sim_time, timestep, max_w))
-    print(f'Please now run the following code for output processing - {output_command}')
+    if rank==0:
+        print(f'Please now run the following code for output processing - {output_command}')
 
 except:
     logger.error('Exception raised, triggering end of main loop.')
