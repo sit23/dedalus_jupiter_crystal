@@ -1,6 +1,6 @@
 """
 
-mpiexec -n 16 python3 intruder_phys_vortex_forcing.py &&
+mpiexec -n 16 python3 intruder_phys_vortex_forcing_sphere.py &&
 mpiexec -n 16 python3 plot_intruder.py ./snapshots/intruder_forced_1_snapshots/*.h5 --output ./frames/intruder_frames &&
 ffmpeg -r 120 -i ./reproduce/intruder/intruder_frames/write_%06d.png ./reproduce/intruder/intruder_h1e-8.mp4
 
@@ -34,15 +34,15 @@ hour = day / 24
 second = hour / 3600
 
 # Numerical Parameters
-Lx, Lz = 0.7, 0.7
-Nx, Nz = 512, 512
+Nphi = 2048
+Ntheta = 1024
 dealias = 3/2                   
 timestepper = d3.RK222
-max_timestep = 1e-2
+max_timestep = 0.5e-2
 dtype = np.float64
 
 # Length of simulation (days)
-stop_sim_time = 100.0
+stop_sim_time = 1.0
 printout = 0.1
  
 # Planetary Configurations
@@ -54,7 +54,7 @@ g = 24.79 * meter / second**2
 #parameter for radiative damping
 inv_tau_rad = 0.0 #have made it the inverse of tau_rad so that tau_rad = infinity is easily done by setting inv_tau_rad = 0.0
 
-exp_name = 'example_intruder_phys_forcing_vortex_16_cores_sync_global_av4_long'
+exp_name = 'example_intruder_phys_no_forcing_vortex_sphere_no_noise_high_res2'
 
 
 #-----------------------------------------------------------------------------------------------------------------
@@ -73,8 +73,10 @@ h = dist.Field(name='h', bases=basis)
 u = dist.VectorField(coords, name='u', bases=basis)
 
 # Substitutions
-phi, theta = dist.local_grids(basis)
-lat = np.pi / 2 - theta + 0*phi
+lon, theta = dist.local_grids(basis)
+#adding zero times lon and theta so that we get a 256x128 array of lat and lon
+lat = np.pi / 2 - theta + 0*lon
+lon = lon + 0.*theta
 
 # forcing
 Fh = dist.Field(name="Fh", bases=basis)
@@ -107,8 +109,10 @@ Ro = 0.23
 
 # Calculate max speed with Rossby Number
 f0 = 2 * Omega                                       # Planetary vorticity
-rm = 1e6 * meter                                     # Radius of vortex (km)
+rm = 1e6 * meter   *2.                                  # Radius of vortex (km)
 vm = Ro * f0 * rm                                    # Calculate speed with Ro
+
+rm_ang_rad = rm /R
 
 # Calculate deformation radius with Burger number
 H = 5e4 * meter 
@@ -127,22 +131,54 @@ phi00 = phi0 * second**2 / meter**2
 # South pole coordinates
 south_lat = [90., 85., 85., 85., 85., 85., 75.]
 south_long = [0., 0., 72., 144., 216., 288., 0.]
-
+# south_lat = [45.]
+# south_long = [0.]
 # Convert longitude and latitude inputs into x,y coordinates
 def conversion(lat, lon):
     lat, lon = np.deg2rad(lat), np.deg2rad(lon)
-    x = R * np.cos(lat) * np.cos(lon)
-    y = R * np.cos(lat) * np.sin(lon)
-    return x, y
+    return lon, lat
 
 for i in range(len(south_lat)):
 
-    xx,yy = conversion(south_lat, south_long)
-    r = np.sqrt( (x-xx[i])**2 + (y-yy[i])**2 )
+    # xx = (deg_lon(i) - (storm_lon(storm_count_i)+mm*360.))/(h_width/cos_lat(j))
+    # yy = (deg_lat(j) - storm_lat(storm_count_i))/h_width
 
-    # Overide u,v components in velocity field
-    u['g'][0] += - vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (y-yy[i]) / ( r + 1e-16 ) )
-    u['g'][1] += vm * ( r / rm ) * np.exp( (1/b) * ( 1 - ( r / rm )**b ) ) * ( (x-xx[i]) / ( r + 1e-16 ) )   
+    # x_loc_storm,y_loc_storm = conversion(storm_lat[storm_count_i], storm_lon[storm_count_i])
+    # 
+    # 
+    # dd = xx ** 2 + yy ** 2
+    # dt_hg_physical_forcing += storm_strength * np.exp(-dd) * np.exp(-tt)
+
+
+    south_lon_rad, south_lat_rad = conversion(south_lat[i], south_long[i])
+    # r = np.sqrt( (x-xx[i])**2 + (y-yy[i])**2 )
+    xx = (lon - south_lon_rad)/ (1./np.cos(np.deg2rad(lat)))
+    xx_m2pi = (lon - south_lon_rad-2.*np.pi)/ (1./np.cos(np.deg2rad(lat)))
+    xx_p2pi = (lon - south_lon_rad+2.*np.pi)/ (1./np.cos(np.deg2rad(lat)))
+
+    xx_min = np.zeros_like(xx) + np.nan
+    where_xx_min = np.where(np.logical_and(np.abs(xx)<=np.abs(xx_m2pi), np.abs(xx)<=np.abs(xx_p2pi)))
+    where_xx_m2pi_min = np.where(np.logical_and(np.abs(xx_m2pi)<=np.abs(xx), np.abs(xx_m2pi)<=np.abs(xx_p2pi)))
+    where_xx_p2pi_min = np.where(np.logical_and(np.abs(xx_p2pi)<=np.abs(xx), np.abs(xx_p2pi)<=np.abs(xx_m2pi)))
+
+    xx_min[where_xx_min] = xx[where_xx_min]
+    xx_min[where_xx_m2pi_min] = xx_m2pi[where_xx_m2pi_min]    
+    xx_min[where_xx_p2pi_min] = xx_p2pi[where_xx_p2pi_min]    
+
+    assert(not np.any(np.isnan(xx_min)))
+
+    xx_min_sqd = np.minimum(xx_p2pi**2., xx_m2pi**2.)
+    xx_min_sqd = np.minimum(xx_min_sqd, xx**2.)
+    yy = (lat - south_lat_rad) / (1.)
+
+    if south_lat[i]==90. or south_lat[i] == -90.:
+        r = np.abs(yy)
+        xx_min = np.zeros_like(xx_min)
+    else:
+        r = np.sqrt(xx_min_sqd + yy**2.)
+
+    u['g'][0] += - vm * ( r / rm_ang_rad ) * np.exp( (1/b) * ( 1 - ( r / rm_ang_rad )**b ) ) * ( (yy) / ( r + 1e-16 ) )
+    u['g'][1] += vm * ( r / rm_ang_rad ) * np.exp( (1/b) * ( 1 - ( r / rm_ang_rad )**b ) ) * ( (xx_min) / ( r + 1e-16 ) ) 
 
 
 def vortex_forcing(model_time, phi0, storm_count, storm_time, storm_lat, storm_lon):
@@ -155,7 +191,6 @@ def vortex_forcing(model_time, phi0, storm_count, storm_time, storm_lat, storm_l
     storm_length = 10000.0  # Same as above
 
     h_width = 2.0
-    h_width_dist_units = np.deg2rad(h_width)*R
 
     local_sum_of_forcing = np.array([0.], dtype='float64')
     global_sum_of_forcing = np.array([0.], dtype='float64')
@@ -205,9 +240,10 @@ def vortex_forcing(model_time, phi0, storm_count, storm_time, storm_lat, storm_l
         if storm_active and storm_time[storm_count_i] != 0:
             tt = (time_delta ** 2) / storm_length ** 2
             storm_strength = 1.0 * phi0 / storm_length
-            x_loc_storm,y_loc_storm = conversion(storm_lat[storm_count_i], storm_lon[storm_count_i])
-            xx = (x - x_loc_storm)/ (h_width_dist_units)
-            yy = (y - y_loc_storm)/ (h_width_dist_units)
+            south_lon_rad, south_lat_rad = conversion(storm_lat[storm_count_i], storm_lon[storm_count_i])
+
+            xx = (lon - south_lon_rad)/ (h_width/np.cos(np.deg2rad(lat)))
+            yy = (lat - south_lat_rad) / (h_width)            
             dd = xx ** 2 + yy ** 2
             dt_hg_physical_forcing += storm_strength * np.exp(-dd) * np.exp(-tt)
 
@@ -224,13 +260,13 @@ def vortex_forcing(model_time, phi0, storm_count, storm_time, storm_lat, storm_l
 c = dist.Field(name='c')
 problem = d3.LBVP([h, c], namespace=locals())
 problem.add_equation("g*lap(h) + c = - div(u@grad(u) + 2*Omega*zcross(u))")
-problem.add_equation("integ(h) = 0")
+problem.add_equation("ave(h) = 0")
 solver = problem.build_solver()
 solver.solve()
 
 # Initial condition: perturbation
 #---------------------------------
-h['g'] += ( np.random.rand(h['g'].shape[0], h['g'].shape[1]) - 0.5 ) * 1e-8
+# h['g'] += ( np.random.rand(h['g'].shape[0], h['g'].shape[1]) - 0.5 ) * 1e-8
 
 
 
@@ -242,7 +278,7 @@ h['g'] += ( np.random.rand(h['g'].shape[0], h['g'].shape[1]) - 0.5 ) * 1e-8
 # Problem
 problem = d3.IVP([u, h], namespace=locals())
 problem.add_equation("dt(u) + nu*lap(lap(u)) + g*grad(h)  = - u@grad(u) - 2*Omega*zcross(u)")
-problem.add_equation("dt(h) + nu*lap(lap(h)) + H*div(u) + h*inv_tau_rad = - div(h*u) + Fh")
+problem.add_equation("dt(h) + nu*lap(lap(h)) + H*div(u) + h*inv_tau_rad = - div(h*u)")
 solver = problem.build_solver(timestepper)
 solver.stop_sim_time = stop_sim_time 
 
@@ -252,7 +288,7 @@ solver.stop_sim_time = stop_sim_time
 
 # Set up and save snapshots
 output_folder = f'snapshots/{exp_name}'
-output_command = f'mpiexec -n 4 python3 plot_intruder.py {output_folder}/*.h5 --output=./frames/{exp_name}'
+output_command = f'mpiexec -n 4 python3 plot_sphere_phys_forcing.py {output_folder}/*.h5 --output=./frames/{exp_name}'
 # Analysis
 snapshots = solver.evaluator.add_file_handler(output_folder, sim_dt=printout, max_writes=10)
 
