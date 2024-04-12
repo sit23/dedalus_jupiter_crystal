@@ -54,7 +54,7 @@ g = 24.79 * meter / second**2
 #parameter for radiative damping
 inv_tau_rad = 0.0 #have made it the inverse of tau_rad so that tau_rad = infinity is easily done by setting inv_tau_rad = 0.0
 
-exp_name = 'example_intruder_phys_no_forcing_vortex_sphere_no_noise_low_res14'
+exp_name = 'example_intruder_phys_no_forcing_vortex_sphere_no_noise_low_res15'
 
 
 #-----------------------------------------------------------------------------------------------------------------
@@ -193,6 +193,7 @@ def vortex_forcing(model_time, phi0, storm_count, storm_time, storm_lat, storm_l
     storm_length = 10000.0  # Same as above
 
     h_width = 2.0
+    h_width_rad = np.deg2rad(h_width)
 
     local_sum_of_forcing = np.array([0.], dtype='float64')
     global_sum_of_forcing = np.array([0.], dtype='float64')
@@ -244,8 +245,8 @@ def vortex_forcing(model_time, phi0, storm_count, storm_time, storm_lat, storm_l
             storm_strength = 1.0 * phi0 / storm_length
             south_lon_rad, south_lat_rad = conversion(storm_lat[storm_count_i], storm_lon[storm_count_i])
 
-            xx = (lon - south_lon_rad)/ (h_width/np.cos(lat))
-            yy = (lat - south_lat_rad) / (h_width)            
+            xx = (lon - south_lon_rad)/ (h_width_rad/np.cos(lat))
+            yy = (lat - south_lat_rad) / (h_width_rad)            
             dd = xx ** 2 + yy ** 2
             dt_hg_physical_forcing += storm_strength * np.exp(-dd) * np.exp(-tt)
 
