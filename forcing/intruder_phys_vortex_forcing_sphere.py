@@ -34,8 +34,8 @@ hour = day / 24
 second = hour / 3600
 
 # Numerical Parameters
-Nphi = 2048
-Ntheta = 1024
+Nphi = 512
+Ntheta = 256
 dealias = 3/2                   
 timestepper = d3.RK222
 max_timestep = 0.5e-2
@@ -48,13 +48,13 @@ printout = 0.1
 # Planetary Configurations
 R = 71.4e6 * meter           
 Omega = 1.74e-4 / second            
-nu = 1e2 * meter**2 / second / 32**2 
+nu = 1e3 * meter**2 / second / 32**2 
 g = 24.79 * meter / second**2
 
 #parameter for radiative damping
 inv_tau_rad = 0.0 #have made it the inverse of tau_rad so that tau_rad = infinity is easily done by setting inv_tau_rad = 0.0
 
-exp_name = 'example_intruder_phys_no_forcing_vortex_sphere_no_noise_high_res2'
+exp_name = 'example_intruder_phys_no_forcing_vortex_sphere_no_noise_low_res14'
 
 
 #-----------------------------------------------------------------------------------------------------------------
@@ -109,7 +109,7 @@ Ro = 0.23
 
 # Calculate max speed with Rossby Number
 f0 = 2 * Omega                                       # Planetary vorticity
-rm = 1e6 * meter   *2.                                  # Radius of vortex (km)
+rm = 1e6 * meter   *5.                                  # Radius of vortex (km)
 vm = Ro * f0 * rm                                    # Calculate speed with Ro
 
 rm_ang_rad = rm /R
@@ -129,10 +129,11 @@ phi00 = phi0 * second**2 / meter**2
 #----------------------------------------
 
 # South pole coordinates
-south_lat = [90., 85., 85., 85., 85., 85., 75.]
-south_long = [0., 0., 72., 144., 216., 288., 0.]
+# south_lat = [90., 85., 85., 85., 85., 85., 75.]
+south_lat = [90., 45., 45., 45., 45., 45., ]
+south_long = [0., 0., 72., 144., 216., 288.]
 # south_lat = [45.]
-# south_long = [0.]
+# south_long = [270.]
 # Convert longitude and latitude inputs into x,y coordinates
 def conversion(lat, lon):
     lat, lon = np.deg2rad(lat), np.deg2rad(lon)
@@ -152,9 +153,9 @@ for i in range(len(south_lat)):
 
     south_lon_rad, south_lat_rad = conversion(south_lat[i], south_long[i])
     # r = np.sqrt( (x-xx[i])**2 + (y-yy[i])**2 )
-    xx = (lon - south_lon_rad)/ (1./np.cos(np.deg2rad(lat)))
-    xx_m2pi = (lon - south_lon_rad-2.*np.pi)/ (1./np.cos(np.deg2rad(lat)))
-    xx_p2pi = (lon - south_lon_rad+2.*np.pi)/ (1./np.cos(np.deg2rad(lat)))
+    xx = (lon - south_lon_rad)/ (1./np.cos(lat))
+    xx_m2pi = (lon - south_lon_rad-2.*np.pi)/ (1./np.cos(lat))
+    xx_p2pi = (lon - south_lon_rad+2.*np.pi)/ (1./np.cos(lat))
 
     xx_min = np.zeros_like(xx) + np.nan
     where_xx_min = np.where(np.logical_and(np.abs(xx)<=np.abs(xx_m2pi), np.abs(xx)<=np.abs(xx_p2pi)))
@@ -177,9 +178,10 @@ for i in range(len(south_lat)):
     else:
         r = np.sqrt(xx_min_sqd + yy**2.)
 
-    u['g'][0] += - vm * ( r / rm_ang_rad ) * np.exp( (1/b) * ( 1 - ( r / rm_ang_rad )**b ) ) * ( (yy) / ( r + 1e-16 ) )
+    u['g'][0] += vm * ( r / rm_ang_rad ) * np.exp( (1/b) * ( 1 - ( r / rm_ang_rad )**b ) ) * ( (yy) / ( r + 1e-16 ) )
     u['g'][1] += vm * ( r / rm_ang_rad ) * np.exp( (1/b) * ( 1 - ( r / rm_ang_rad )**b ) ) * ( (xx_min) / ( r + 1e-16 ) ) 
 
+# pdb.set_trace()
 
 def vortex_forcing(model_time, phi0, storm_count, storm_time, storm_lat, storm_lon):
 
@@ -222,8 +224,8 @@ def vortex_forcing(model_time, phi0, storm_count, storm_time, storm_lat, storm_l
             # Randomly generate storm location
             storm_lon[storm_count] = np.random.rand() * 360
             temp_rand = np.random.rand()
-            # storm_lat[storm_count] = -(90. - 45. * np.arccos(2 * temp_rand - 1) / np.arctan(1.0))
-            storm_lat[storm_count] = 80 + 10.*(np.random.rand()-0.5)            
+            storm_lat[storm_count] = -(90. - 45. * np.arccos(2 * temp_rand - 1) / np.arctan(1.0))
+            # storm_lat[storm_count] = 80 + 10.*(np.random.rand()-0.5)            
 
     try:
         storm_time = comm.bcast(storm_time, root=0)
@@ -242,7 +244,7 @@ def vortex_forcing(model_time, phi0, storm_count, storm_time, storm_lat, storm_l
             storm_strength = 1.0 * phi0 / storm_length
             south_lon_rad, south_lat_rad = conversion(storm_lat[storm_count_i], storm_lon[storm_count_i])
 
-            xx = (lon - south_lon_rad)/ (h_width/np.cos(np.deg2rad(lat)))
+            xx = (lon - south_lon_rad)/ (h_width/np.cos(lat))
             yy = (lat - south_lat_rad) / (h_width)            
             dd = xx ** 2 + yy ** 2
             dt_hg_physical_forcing += storm_strength * np.exp(-dd) * np.exp(-tt)
@@ -278,7 +280,7 @@ solver.solve()
 # Problem
 problem = d3.IVP([u, h], namespace=locals())
 problem.add_equation("dt(u) + nu*lap(lap(u)) + g*grad(h)  = - u@grad(u) - 2*Omega*zcross(u)")
-problem.add_equation("dt(h) + nu*lap(lap(h)) + H*div(u) + h*inv_tau_rad = - div(h*u)")
+problem.add_equation("dt(h) + nu*lap(lap(h)) + H*div(u) + h*inv_tau_rad = - div(h*u) + Fh")
 solver = problem.build_solver(timestepper)
 solver.stop_sim_time = stop_sim_time 
 
