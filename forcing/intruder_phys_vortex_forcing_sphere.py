@@ -17,6 +17,7 @@ import logging
 import matplotlib.pyplot as plt
 logger = logging.getLogger(__name__)
 from mpi4py import MPI
+import ded3_xarray as dedxar
 
 import pdb
 
@@ -42,7 +43,7 @@ max_timestep = 0.5e-2
 dtype = np.float64
 
 # Length of simulation (days)
-stop_sim_time = 1.0
+stop_sim_time = 10.0
 printout = 0.1
  
 # Planetary Configurations
@@ -54,7 +55,7 @@ g = 24.79 * meter / second**2
 #parameter for radiative damping
 inv_tau_rad = 0.0 #have made it the inverse of tau_rad so that tau_rad = infinity is easily done by setting inv_tau_rad = 0.0
 
-exp_name = 'example_intruder_phys_no_forcing_vortex_sphere_no_noise_low_res15'
+exp_name = 'example_intruder_phys_forcing_no_vortex_sphere_no_noise_low_res34'
 
 
 #-----------------------------------------------------------------------------------------------------------------
@@ -71,6 +72,18 @@ basis = d3.SphereBasis(coords, (Nphi, Ntheta), radius=R, dealias=dealias, dtype=
 # Fields both functions of x,y
 h = dist.Field(name='h', bases=basis)
 u = dist.VectorField(coords, name='u', bases=basis)
+
+ones_arr = dist.Field(name='ones', bases=basis)
+
+ones_arr['g'] = 1.
+
+# e_phi = dist.VectorField(coords, bases=basis) #(where coords and basis are as defined in the example). 
+# e_phi['g'][0] = 1. 
+
+# e_theta = dist.VectorField(coords, bases=basis) #(where coords and basis are as defined in the example). 
+# e_theta['g'][1] = 1. 
+
+# ephi, etheta = coords.unit_vector_fields(dist)
 
 # Substitutions
 lon, theta = dist.local_grids(basis)
@@ -109,7 +122,7 @@ Ro = 0.23
 
 # Calculate max speed with Rossby Number
 f0 = 2 * Omega                                       # Planetary vorticity
-rm = 1e6 * meter   *5.                                  # Radius of vortex (km)
+rm = 1e6 * meter                                     # Radius of vortex (km)
 vm = Ro * f0 * rm                                    # Calculate speed with Ro
 
 rm_ang_rad = rm /R
@@ -129,8 +142,8 @@ phi00 = phi0 * second**2 / meter**2
 #----------------------------------------
 
 # South pole coordinates
-# south_lat = [90., 85., 85., 85., 85., 85., 75.]
-south_lat = [90., 45., 45., 45., 45., 45., ]
+south_lat = [90., 85., 85., 85., 85., 85.]#, 75.]
+# south_lat = [90., 45., 45., 45., 45., 45., ]
 south_long = [0., 0., 72., 144., 216., 288.]
 # south_lat = [45.]
 # south_long = [270.]
@@ -178,8 +191,8 @@ for i in range(len(south_lat)):
     else:
         r = np.sqrt(xx_min_sqd + yy**2.)
 
-    u['g'][0] += vm * ( r / rm_ang_rad ) * np.exp( (1/b) * ( 1 - ( r / rm_ang_rad )**b ) ) * ( (yy) / ( r + 1e-16 ) )
-    u['g'][1] += vm * ( r / rm_ang_rad ) * np.exp( (1/b) * ( 1 - ( r / rm_ang_rad )**b ) ) * ( (xx_min) / ( r + 1e-16 ) ) 
+    u['g'][0] -= vm * ( r / rm_ang_rad ) * np.exp( (1/b) * ( 1 - ( r / rm_ang_rad )**b ) ) * ( (yy) / ( r + 1e-16 ) )
+    u['g'][1] -= vm * ( r / rm_ang_rad ) * np.exp( (1/b) * ( 1 - ( r / rm_ang_rad )**b ) ) * ( (xx_min) / ( r + 1e-16 ) ) 
 
 # pdb.set_trace()
 
@@ -206,10 +219,9 @@ def vortex_forcing(model_time, phi0, storm_count, storm_time, storm_lat, storm_l
             storm_time[0] = storm_interval * 1.5
 
             # Randomly generate storm location
-            storm_lon[0] = np.random.rand() * 360
+            storm_lon[0] = np.random.rand() * 360.
             temp_rand = np.random.rand()
-            # storm_lat[storm_count] = -(90. - 45. * np.arccos(2 * temp_rand - 1) / np.arctan(1.0))
-            storm_lat[0] = 80 + 10.*(np.random.rand()-0.5)  
+            storm_lat[0] = -(90. - 45. * np.arccos(2 * temp_rand - 1) / np.arctan(1.0))
 
         elif (model_time - (storm_time[storm_count]-storm_length/2.)) >= storm_interval:
 
@@ -223,10 +235,9 @@ def vortex_forcing(model_time, phi0, storm_count, storm_time, storm_lat, storm_l
                 storm_time[storm_count] = storm_time[storm_count - 1] + storm_interval
 
             # Randomly generate storm location
-            storm_lon[storm_count] = np.random.rand() * 360
+            storm_lon[storm_count] = np.random.rand() * 360.
             temp_rand = np.random.rand()
             storm_lat[storm_count] = -(90. - 45. * np.arccos(2 * temp_rand - 1) / np.arctan(1.0))
-            # storm_lat[storm_count] = 80 + 10.*(np.random.rand()-0.5)            
 
     try:
         storm_time = comm.bcast(storm_time, root=0)
@@ -245,9 +256,16 @@ def vortex_forcing(model_time, phi0, storm_count, storm_time, storm_lat, storm_l
             storm_strength = 1.0 * phi0 / storm_length
             south_lon_rad, south_lat_rad = conversion(storm_lat[storm_count_i], storm_lon[storm_count_i])
 
-            xx = (lon - south_lon_rad)/ (h_width_rad/np.cos(lat))
-            yy = (lat - south_lat_rad) / (h_width_rad)            
-            dd = xx ** 2 + yy ** 2
+            xx      = (lon - south_lon_rad         )/ (h_width_rad/np.cos(lat))
+            xx_m2pi = (lon - south_lon_rad-2.*np.pi)/ (h_width_rad/np.cos(lat))
+            xx_p2pi = (lon - south_lon_rad+2.*np.pi)/ (h_width_rad/np.cos(lat))
+
+            xx_min_sqd = np.minimum(xx_p2pi**2., xx_m2pi**2.)
+            xx_min_sqd = np.minimum(xx_min_sqd, xx**2.)
+
+            yy = (lat - south_lat_rad) / (h_width_rad)         
+               
+            dd = xx_min_sqd + yy ** 2
             dt_hg_physical_forcing += storm_strength * np.exp(-dd) * np.exp(-tt)
 
     local_sum_of_forcing = np.array([np.sum(dt_hg_physical_forcing)])
@@ -298,8 +316,13 @@ snapshots = solver.evaluator.add_file_handler(output_folder, sim_dt=printout, ma
 # add potential vorticity field
 # snapshots.add_task((-d3.div(d3.skew(u)) + 2*Omega*coscolat) / phi, name='PV')
 snapshots.add_task(h, name='height')
+snapshots.add_task(h+H, name='total_height')
 snapshots.add_task(-d3.div(d3.skew(u)), name='vorticity')
 snapshots.add_task(Fh, name='height_forcing')
+snapshots.add_task(u, name='u')
+snapshots.add_task((2*Omega*d3.MulCosine(ones_arr)-d3.div(d3.skew(u)))/(h+H), name='PV')
+# snapshots.add_task(0.5*u@u, name='e_kin')
+# snapshots.add_task(0.5*h**2., name='APE')
 
 
 #-----------------------------------------------------------------------------------------------------------------
@@ -324,6 +347,7 @@ try:
             logger.info('Iteration=%i, Time=%e, dt=%e' %(solver.iteration, solver.sim_time, timestep))
     if rank==0:
         print(f'Please now run the following code for output processing - {output_command}')
+        dedxar.convert_to_netcdf(exp_name, force_recalculate=True)
 
 except:
     logger.error('Exception raised, triggering end of main loop.')
