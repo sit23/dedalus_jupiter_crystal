@@ -29,7 +29,7 @@ num_cores = comm.Get_size()
 #------------
 
 # Simulation units
-meter = 1 / 71.4e6
+meter = 1 / 1e7
 day = 1
 hour = day / 24
 second = hour / 3600
@@ -47,15 +47,15 @@ stop_sim_time = 10.0
 printout = 0.1
  
 # Planetary Configurations
-R = 71.4e6 * meter           
-Omega = 1.74e-4 / second            
-nu = 1e3 * meter**2 / second / 32**2 
-g = 24.79 * meter / second**2
+R = 1e7 * meter           
+Omega = 1.e-4 / second            
+nu = 1e3 * meter**4 / second #used to be about 1e-11, now 1e-25 (dimensions were wrong)
+g = 1. * meter / second**2
 
 #parameter for radiative damping
 inv_tau_rad = 0.0 #have made it the inverse of tau_rad so that tau_rad = infinity is easily done by setting inv_tau_rad = 0.0
 
-exp_name = 'example_intruder_phys_forcing_no_vortex_sphere_no_noise_low_res34'
+exp_name = 'phys_forcing_no_crystal_bd_recreate_Ro_100_taurad_0_mk6'
 
 
 #-----------------------------------------------------------------------------------------------------------------
@@ -114,8 +114,9 @@ zcross = lambda A: d3.MulCosine(d3.skew(A))
 b = 1.5
 
 # Rossby Number
-Ro = 0.23
+Ro = 100.
 
+add_vortex_crystal = False
 
 # Dependent variables
 #---------------------
@@ -128,88 +129,98 @@ vm = Ro * f0 * rm                                    # Calculate speed with Ro
 rm_ang_rad = rm /R
 
 # Calculate deformation radius with Burger number
-H = 5e4 * meter 
+phi0 = Ro*4.*(((Omega*R))**2.) 
+H = phi0/g
 phi = g * (h + H) 
 
 # Calculate Burger Number -- Currently Bu ~ 10
-phi0 = g*H
+# phi0 = g*H
 Bu = phi0 / (f0 * rm)**2 
+
+# Ek = nu/(2.*Omega)
 
 # Check phi0 dimensionalised
 phi00 = phi0 * second**2 / meter**2
+print(f'model units phi0={phi0}')
+print(f'physical units phi00={phi00}')
 
 # Initial condition: South pole vortices
 #----------------------------------------
 
-# South pole coordinates
-south_lat = [90., 85., 85., 85., 85., 85.]#, 75.]
-# south_lat = [90., 45., 45., 45., 45., 45., ]
-south_long = [0., 0., 72., 144., 216., 288.]
-# south_lat = [45.]
-# south_long = [270.]
+
 # Convert longitude and latitude inputs into x,y coordinates
 def conversion(lat, lon):
     lat, lon = np.deg2rad(lat), np.deg2rad(lon)
     return lon, lat
 
-for i in range(len(south_lat)):
+if add_vortex_crystal:
+    # South pole coordinates
+    south_lat = [90., 85., 85., 85., 85., 85.]#, 75.]
+    # south_lat = [90., 45., 45., 45., 45., 45., ]
+    south_long = [0., 0., 72., 144., 216., 288.]
+    # south_lat = [45.]
+    # south_long = [270.]
 
-    # xx = (deg_lon(i) - (storm_lon(storm_count_i)+mm*360.))/(h_width/cos_lat(j))
-    # yy = (deg_lat(j) - storm_lat(storm_count_i))/h_width
+    for i in range(len(south_lat)):
 
-    # x_loc_storm,y_loc_storm = conversion(storm_lat[storm_count_i], storm_lon[storm_count_i])
-    # 
-    # 
-    # dd = xx ** 2 + yy ** 2
-    # dt_hg_physical_forcing += storm_strength * np.exp(-dd) * np.exp(-tt)
+        # xx = (deg_lon(i) - (storm_lon(storm_count_i)+mm*360.))/(h_width/cos_lat(j))
+        # yy = (deg_lat(j) - storm_lat(storm_count_i))/h_width
+
+        # x_loc_storm,y_loc_storm = conversion(storm_lat[storm_count_i], storm_lon[storm_count_i])
+        # 
+        # 
+        # dd = xx ** 2 + yy ** 2
+        # dt_hg_physical_forcing += storm_strength * np.exp(-dd) * np.exp(-tt)
 
 
-    south_lon_rad, south_lat_rad = conversion(south_lat[i], south_long[i])
-    # r = np.sqrt( (x-xx[i])**2 + (y-yy[i])**2 )
-    xx = (lon - south_lon_rad)/ (1./np.cos(lat))
-    xx_m2pi = (lon - south_lon_rad-2.*np.pi)/ (1./np.cos(lat))
-    xx_p2pi = (lon - south_lon_rad+2.*np.pi)/ (1./np.cos(lat))
+        south_lon_rad, south_lat_rad = conversion(south_lat[i], south_long[i])
+        # r = np.sqrt( (x-xx[i])**2 + (y-yy[i])**2 )
+        xx = (lon - south_lon_rad)/ (1./np.cos(lat))
+        xx_m2pi = (lon - south_lon_rad-2.*np.pi)/ (1./np.cos(lat))
+        xx_p2pi = (lon - south_lon_rad+2.*np.pi)/ (1./np.cos(lat))
 
-    xx_min = np.zeros_like(xx) + np.nan
-    where_xx_min = np.where(np.logical_and(np.abs(xx)<=np.abs(xx_m2pi), np.abs(xx)<=np.abs(xx_p2pi)))
-    where_xx_m2pi_min = np.where(np.logical_and(np.abs(xx_m2pi)<=np.abs(xx), np.abs(xx_m2pi)<=np.abs(xx_p2pi)))
-    where_xx_p2pi_min = np.where(np.logical_and(np.abs(xx_p2pi)<=np.abs(xx), np.abs(xx_p2pi)<=np.abs(xx_m2pi)))
+        xx_min = np.zeros_like(xx) + np.nan
+        where_xx_min = np.where(np.logical_and(np.abs(xx)<=np.abs(xx_m2pi), np.abs(xx)<=np.abs(xx_p2pi)))
+        where_xx_m2pi_min = np.where(np.logical_and(np.abs(xx_m2pi)<=np.abs(xx), np.abs(xx_m2pi)<=np.abs(xx_p2pi)))
+        where_xx_p2pi_min = np.where(np.logical_and(np.abs(xx_p2pi)<=np.abs(xx), np.abs(xx_p2pi)<=np.abs(xx_m2pi)))
 
-    xx_min[where_xx_min] = xx[where_xx_min]
-    xx_min[where_xx_m2pi_min] = xx_m2pi[where_xx_m2pi_min]    
-    xx_min[where_xx_p2pi_min] = xx_p2pi[where_xx_p2pi_min]    
+        xx_min[where_xx_min] = xx[where_xx_min]
+        xx_min[where_xx_m2pi_min] = xx_m2pi[where_xx_m2pi_min]    
+        xx_min[where_xx_p2pi_min] = xx_p2pi[where_xx_p2pi_min]    
 
-    assert(not np.any(np.isnan(xx_min)))
+        assert(not np.any(np.isnan(xx_min)))
 
-    xx_min_sqd = np.minimum(xx_p2pi**2., xx_m2pi**2.)
-    xx_min_sqd = np.minimum(xx_min_sqd, xx**2.)
-    yy = (lat - south_lat_rad) / (1.)
+        xx_min_sqd = np.minimum(xx_p2pi**2., xx_m2pi**2.)
+        xx_min_sqd = np.minimum(xx_min_sqd, xx**2.)
+        yy = (lat - south_lat_rad) / (1.)
 
-    if south_lat[i]==90. or south_lat[i] == -90.:
-        r = np.abs(yy)
-        xx_min = np.zeros_like(xx_min)
-    else:
-        r = np.sqrt(xx_min_sqd + yy**2.)
+        if south_lat[i]==90. or south_lat[i] == -90.:
+            r = np.abs(yy)
+            xx_min = np.zeros_like(xx_min)
+        else:
+            r = np.sqrt(xx_min_sqd + yy**2.)
 
-    u['g'][0] -= vm * ( r / rm_ang_rad ) * np.exp( (1/b) * ( 1 - ( r / rm_ang_rad )**b ) ) * ( (yy) / ( r + 1e-16 ) )
-    u['g'][1] -= vm * ( r / rm_ang_rad ) * np.exp( (1/b) * ( 1 - ( r / rm_ang_rad )**b ) ) * ( (xx_min) / ( r + 1e-16 ) ) 
+        u['g'][0] -= vm * ( r / rm_ang_rad ) * np.exp( (1/b) * ( 1 - ( r / rm_ang_rad )**b ) ) * ( (yy) / ( r + 1e-16 ) )
+        u['g'][1] -= vm * ( r / rm_ang_rad ) * np.exp( (1/b) * ( 1 - ( r / rm_ang_rad )**b ) ) * ( (xx_min) / ( r + 1e-16 ) ) 
 
-# pdb.set_trace()
 
-def vortex_forcing(model_time, phi0, storm_count, storm_time, storm_lat, storm_lon):
+def vortex_forcing(model_time, H, storm_count, storm_time, storm_lat, storm_lon):
 
     dt_hg_physical_forcing = np.zeros_like(Fh['g'])
 
     storm_strength = 1.0
 
-    storm_interval = 10000.0  # 0.5 * (10**therm_damp_time) / 100.0 was commented out in the original
-    storm_length = 10000.0  # Same as above
+    storm_interval = 100000.0  # 0.5 * (10**therm_damp_time) / 100.0 was commented out in the original
+    storm_length = 100000.0  # Same as above
 
     h_width = 2.0
     h_width_rad = np.deg2rad(h_width)
 
     local_sum_of_forcing = np.array([0.], dtype='float64')
     global_sum_of_forcing = np.array([0.], dtype='float64')
+
+    local_sum_of_grid = np.array([0.], dtype='float64')
+    global_sum_of_grid = np.array([0.], dtype='float64')
 
     if rank == 0:
 
@@ -253,7 +264,7 @@ def vortex_forcing(model_time, phi0, storm_count, storm_time, storm_lat, storm_l
         storm_active = -storm_length / 2 <= time_delta <= storm_length / 2
         if storm_active and storm_time[storm_count_i] != 0:
             tt = (time_delta ** 2) / storm_length ** 2
-            storm_strength = 1.0 * phi0 / storm_length
+            storm_strength = 1.0 * H / (storm_length*second) #must be in non-dim units
             south_lon_rad, south_lat_rad = conversion(storm_lat[storm_count_i], storm_lon[storm_count_i])
 
             xx      = (lon - south_lon_rad         )/ (h_width_rad/np.cos(lat))
@@ -268,11 +279,13 @@ def vortex_forcing(model_time, phi0, storm_count, storm_time, storm_lat, storm_l
             dd = xx_min_sqd + yy ** 2
             dt_hg_physical_forcing += storm_strength * np.exp(-dd) * np.exp(-tt)
 
-    local_sum_of_forcing = np.array([np.sum(dt_hg_physical_forcing)])
+    local_sum_of_forcing = np.array([np.sum(dt_hg_physical_forcing*np.cos(lat))])
+    local_sum_of_grid    = np.array([np.sum(np.cos(lat))])
 
     comm.Allreduce([local_sum_of_forcing, MPI.DOUBLE], [global_sum_of_forcing, MPI.DOUBLE], op=MPI.SUM)
+    comm.Allreduce([local_sum_of_grid,    MPI.DOUBLE], [global_sum_of_grid,    MPI.DOUBLE], op=MPI.SUM)
 
-    dt_hg_physical_forcing -= global_sum_of_forcing[0]/(dt_hg_physical_forcing.size*num_cores)
+    dt_hg_physical_forcing -= global_sum_of_forcing[0]/global_sum_of_grid[0]
 
     return dt_hg_physical_forcing, storm_count, storm_time, storm_lat, storm_lon
 
@@ -287,7 +300,7 @@ solver.solve()
 
 # Initial condition: perturbation
 #---------------------------------
-# h['g'] += ( np.random.rand(h['g'].shape[0], h['g'].shape[1]) - 0.5 ) * 1e-8
+h['g'] += ( np.random.rand(h['g'].shape[0], h['g'].shape[1]) - 0.5 ) * 1e-8
 
 
 
@@ -340,7 +353,7 @@ try:
         # Set vorticity forcing field from normalized Gaussian random field rescaled by forcing rate, including factor for 1/2 in kinetic energy
         # epsilon * kf**2 = enstrophy injection rate
         Fh.change_scales(1.)
-        Fh["g"], storm_count, storm_time, storm_lat, storm_lon = vortex_forcing(solver.sim_time/second, phi0, storm_count, storm_time, storm_lat, storm_lon)
+        Fh["g"], storm_count, storm_time, storm_lat, storm_lon = vortex_forcing(solver.sim_time/second, H, storm_count, storm_time, storm_lat, storm_lon)
 
         solver.step(timestep)
         if (solver.iteration-1) % 10 == 0:
