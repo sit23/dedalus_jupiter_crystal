@@ -39,23 +39,23 @@ Nphi = 512
 Ntheta = 256
 dealias = 3/2                   
 timestepper = d3.RK222
-max_timestep = 0.5e-2
+max_timestep = 5e-2
 dtype = np.float64
 
 # Length of simulation (days)
-stop_sim_time = 10.0
-printout = 0.1
+stop_sim_time = 10000.0
+printout = 100.0
  
 # Planetary Configurations
 R = 1e7 * meter           
 Omega = 1.e-4 / second            
-nu = 1e3 * meter**4 / second #used to be about 1e-11, now 1e-25 (dimensions were wrong)
+nu = 1e16 * meter**4 / second #used to be about 1e-11, now 1e-25 (dimensions were wrong)
 g = 1. * meter / second**2
 
 #parameter for radiative damping
 inv_tau_rad = 0.0 #have made it the inverse of tau_rad so that tau_rad = infinity is easily done by setting inv_tau_rad = 0.0
 
-exp_name = 'phys_forcing_no_crystal_bd_recreate_Ro_100_taurad_0_mk6'
+exp_name = 'phys_forcing_no_crystal_bd_recreate_Ro_100_taurad_0_mk8'
 
 
 #-----------------------------------------------------------------------------------------------------------------

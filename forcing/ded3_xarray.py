@@ -59,7 +59,7 @@ def convert_to_netcdf(exp_name, force_recalculate=False):
 
 
 if __name__=="__main__":
-    exp_name = 'phys_forcing_no_crystal_bd_recreate_Ro_100_taurad_0_mk4'
+    exp_name = 'phys_forcing_no_crystal_bd_recreate_Ro_100_taurad_0_mk7'
 
     dataset = convert_to_netcdf(exp_name, force_recalculate=False)
 
