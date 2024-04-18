@@ -45,8 +45,8 @@ max_timestep = 5e-3
 dtype = np.float64
 
 # Length of simulation (days)
-stop_sim_time = 5000.0
-printout = 100.0
+stop_sim_time = 2.0
+printout = 0.1
  
 # Planetary Configurations
 R = 7.14e7 * meter           
@@ -54,7 +54,12 @@ Omega = 1.74e-4 / second
 nu = 1e16 * meter**4 / second #used to be about 1e-11, now 1e-25 (dimensions were wrong)
 g = 24.79 * meter / second**2
 
-phi0 = 9e5 *meter**2./second**2.
+phi0_1 = 6e4 *meter**2./second**2.
+phi0_2 = 9e5 *meter**2./second**2.
+
+rho_1 = 1.
+rho_2 = 2.
+g_red = g*(rho_2-rho_1)/rho_1
 
 #parameter for radiative damping
 inv_tau_rad = 0.0 #have made it the inverse of tau_rad so that tau_rad = infinity is easily done by setting inv_tau_rad = 0.0
@@ -67,16 +72,19 @@ storm_length_dim = 100000.0   #seconds
 
 h_width = 2.1 #degrees
 
-ld_at_45N = (np.sqrt(phi0)/(2.*Omega*np.sin(np.deg2rad(45.))))/meter
+ld_1_at_45N = (np.sqrt(phi0_1)/(2.*Omega*np.sin(np.deg2rad(45.))))/meter
+ld_2_at_45N = (np.sqrt(phi0_2)/(2.*Omega*np.sin(np.deg2rad(45.))))/meter
+
+couple_layers = False
 
 showman_s0_nondim = showman_s0*meter**2./second**3
 showman_s0_nondim_height_units = showman_s0_nondim/g
 
 
-exp_name = 'showman_2007_A5_mk10'
+exp_name = '2_layer_showman_2007_A1_A5_mk1'
 output_folder = f'snapshots/{exp_name}'
 
-params_to_store = ['meter', 'second', 'Nphi', 'Ntheta', 'dealias', 'max_timestep', 'stop_sim_time', 'printout', 'R', 'Omega', 'nu', 'g', 'inv_tau_rad', 'showman_s0', 'storm_interval_dim', 'storm_length_dim', 'h_width', 'exp_name', 'output_folder', 'phi0', 'ld_at_45N']
+params_to_store = ['meter', 'second', 'Nphi', 'Ntheta', 'dealias', 'max_timestep', 'stop_sim_time', 'printout', 'R', 'Omega', 'nu', 'g', 'inv_tau_rad', 'showman_s0', 'storm_interval_dim', 'storm_length_dim', 'h_width', 'exp_name', 'output_folder', 'phi0_1', 'phi0_2', 'rho_1', 'rho_2', 'g_red', 'ld_1_at_45N', 'ld_2_at_45N']
 
 all_locals = locals()
     # Selectively create a dictionary of variables you are interested in
@@ -101,8 +109,11 @@ basis = d3.SphereBasis(coords, (Nphi, Ntheta), radius=R, dealias=dealias, dtype=
 
 
 # Fields both functions of x,y
-h = dist.Field(name='h', bases=basis)
-u = dist.VectorField(coords, name='u', bases=basis)
+h_1 = dist.Field(name='h_1', bases=basis)
+u_1 = dist.VectorField(coords, name='u_1', bases=basis)
+
+h_2 = dist.Field(name='h_2', bases=basis)
+u_2 = dist.VectorField(coords, name='u_2', bases=basis)
 
 ones_arr = dist.Field(name='ones', bases=basis)
 
@@ -123,7 +134,9 @@ lat = np.pi / 2 - theta + 0*lon
 lon = lon + 0.*theta
 
 # forcing
-Fh = dist.Field(name="Fh", bases=basis)
+Fh_1 = dist.Field(name="Fh_1", bases=basis)
+Fh_2 = dist.Field(name="Fh_2", bases=basis)
+
 
 # Initialize arrays for storm times, latitudes, and longitudes
 storm_time = np.zeros(31)
@@ -162,8 +175,10 @@ rm_ang_rad = rm /R
 # Calculate deformation radius with Burger number
 # phi0 = Ro*4.*(((Omega*R))**2.) 
 
-H = phi0/g
-phi = g * (h + H) 
+H_1 = phi0_1/g
+H_2 = phi0_2/g
+
+# phi = g * (h + H) 
 
 # Calculate Burger Number -- Currently Bu ~ 10
 # phi0 = g*H
@@ -172,11 +187,14 @@ phi = g * (h + H)
 # Ek = nu/(2.*Omega)
 
 # Check phi0 dimensionalised
-phi00 = phi0 * second**2 / meter**2
+phi00_1 = phi0_1 * second**2 / meter**2
+phi00_2 = phi0_2 * second**2 / meter**2
 if rank==0:
     print(f'non dim value of nu = {nu}')
-    print(f'model units phi0={phi0}')
-    print(f'physical units phi00={phi00}')
+    print(f'model units phi0_1={phi0_1}')
+    print(f'physical units phi00_1={phi00_1}')
+    print(f'model units phi0_2={phi0_2}')
+    print(f'physical units phi00_2={phi00_2}')
 
 # Initial condition: South pole vortices
 #----------------------------------------
@@ -234,13 +252,13 @@ if add_vortex_crystal:
         else:
             r = np.sqrt(xx_min_sqd + yy**2.)
 
-        u['g'][0] -= vm * ( r / rm_ang_rad ) * np.exp( (1/b) * ( 1 - ( r / rm_ang_rad )**b ) ) * ( (yy) / ( r + 1e-16 ) )
-        u['g'][1] -= vm * ( r / rm_ang_rad ) * np.exp( (1/b) * ( 1 - ( r / rm_ang_rad )**b ) ) * ( (xx_min) / ( r + 1e-16 ) ) 
+        u_1['g'][0] -= vm * ( r / rm_ang_rad ) * np.exp( (1/b) * ( 1 - ( r / rm_ang_rad )**b ) ) * ( (yy) / ( r + 1e-16 ) )
+        u_1['g'][1] -= vm * ( r / rm_ang_rad ) * np.exp( (1/b) * ( 1 - ( r / rm_ang_rad )**b ) ) * ( (xx_min) / ( r + 1e-16 ) ) 
 
 
 def vortex_forcing(model_time, H, storm_count, storm_time, storm_lat, storm_lon, storm_length, storm_interval):
 
-    dt_hg_physical_forcing = np.zeros_like(Fh['g'])
+    dt_hg_physical_forcing = np.zeros_like(Fh_1['g'])
 
     storm_strength = 1.0
 
@@ -317,20 +335,28 @@ def vortex_forcing(model_time, H, storm_count, storm_time, storm_lat, storm_lon,
 
     dt_hg_physical_forcing -= global_sum_of_forcing[0]/global_sum_of_grid[0]
 
-    return dt_hg_physical_forcing, storm_count, storm_time, storm_lat, storm_lon
+    dt_hg_physical_forcing_2 = -(H_1/H_2)* dt_hg_physical_forcing
+
+    return dt_hg_physical_forcing, dt_hg_physical_forcing_2, storm_count, storm_time, storm_lat, storm_lon
 
 # Initial condition: height
 #---------------------------
 c = dist.Field(name='c')
-problem = d3.LBVP([h, c], namespace=locals())
-problem.add_equation("g*lap(h) + c = - div(u@grad(u) + 2*Omega*zcross(u))")
-problem.add_equation("ave(h) = 0")
+c_2 = dist.Field(name='c_2')
+
+problem = d3.LBVP([h_1, h_2, c, c_2], namespace=locals())
+problem.add_equation("g*lap(h_1)+g*lap(h_2) + c = - div(u_1@grad(u_1) + 2*Omega*zcross(u_1))")
+problem.add_equation("(rho_1/rho_2)*(g*(lap(h_1)+lap(h_2))+g_red*lap(h_2)) + c_2 = - div(u_2@grad(u_2) + 2*Omega*zcross(u_2))")
+problem.add_equation("ave(h_1) = 0")
+problem.add_equation("ave(h_2) = 0")
 solver = problem.build_solver()
 solver.solve()
 
+
 # Initial condition: perturbation
 #---------------------------------
-h['g'] += ( np.random.rand(h['g'].shape[0], h['g'].shape[1]) - 0.5 ) * 1e-8
+h_1['g'] += ( np.random.rand(h_1['g'].shape[0], h_1['g'].shape[1]) - 0.5 ) * 1e-8
+h_2['g'] += ( np.random.rand(h_2['g'].shape[0], h_2['g'].shape[1]) - 0.5 ) * 1e-8
 
 
 
@@ -340,9 +366,18 @@ h['g'] += ( np.random.rand(h['g'].shape[0], h['g'].shape[1]) - 0.5 ) * 1e-8
 #--------------------
 
 # Problem
-problem = d3.IVP([u, h], namespace=locals())
-problem.add_equation("dt(u) + nu*lap(lap(u)) + g*grad(h)  = - u@grad(u) - 2*Omega*zcross(u)")
-problem.add_equation("dt(h) + nu*lap(lap(h)) + H*div(u) + h*inv_tau_rad = - div(h*u) + Fh")
+problem = d3.IVP([u_1, h_1, u_2, h_2], namespace=locals())
+problem.add_equation("dt(h_1) + nu*lap(lap(h_1)) + H_1*div(u_1) = - div(h_1*u_1)+Fh_1")
+problem.add_equation("dt(h_2) + nu*lap(lap(h_2)) + H_2*div(u_2) = - div(h_2*u_2)+Fh_2")
+
+if couple_layers:
+    problem.add_equation("dt(u_1) + nu*lap(lap(u_1)) + g*grad(h_1) + g*grad(h_2) + 2*Omega*zcross(u_1) = - u_1@grad(u_1)")
+    problem.add_equation("dt(u_2) + nu*lap(lap(u_2)) + (rho_1/rho_2)*(g*(grad(h_1)+grad(h_2)) + g_red*grad(h_2)) + 2*Omega*zcross(u_2) = - u_2@grad(u_2)")
+else:
+    problem.add_equation("dt(u_1) + nu*lap(lap(u_1)) + g*grad(h_1) + 2*Omega*zcross(u_1) = - u_1@grad(u_1)")
+    problem.add_equation("dt(u_2) + nu*lap(lap(u_2)) + (rho_1/rho_2)*(g*grad(h_2) + g_red*grad(h_2)) + 2*Omega*zcross(u_2) = - u_2@grad(u_2)")
+
+
 solver = problem.build_solver(timestepper)
 solver.stop_sim_time = stop_sim_time 
 
@@ -357,12 +392,23 @@ snapshots = solver.evaluator.add_file_handler(output_folder, sim_dt=printout, ma
 
 # add potential vorticity field
 # snapshots.add_task((-d3.div(d3.skew(u)) + 2*Omega*coscolat) / phi, name='PV')
-snapshots.add_task(h/meter, name='height')
-snapshots.add_task((h+H)/meter, name='total_height')
-snapshots.add_task(-d3.div(d3.skew(u))*second, name='vorticity')
-snapshots.add_task(Fh*second/meter, name='height_forcing')
-snapshots.add_task(u*second/meter, name='u')
-snapshots.add_task(((2*Omega*d3.MulCosine(ones_arr)-d3.div(d3.skew(u)))/(h+H))*second*meter, name='PV')
+snapshots.add_task(h_1/meter, name='height_1')
+snapshots.add_task(h_2/meter, name='height_2')
+
+snapshots.add_task((h_1+H_1)/meter, name='total_height_1')
+snapshots.add_task((h_2+H_2)/meter, name='total_height_2')
+
+snapshots.add_task(-d3.div(d3.skew(u_1))*second, name='vorticity_1')
+snapshots.add_task(-d3.div(d3.skew(u_2))*second, name='vorticity_2')
+
+snapshots.add_task(Fh_1*second/meter, name='height_forcing_1')
+snapshots.add_task(Fh_2*second/meter, name='height_forcing_2')
+
+snapshots.add_task(u_1*second/meter, name='u_1')
+snapshots.add_task(u_2*second/meter, name='u_2')
+
+
+snapshots.add_task(((2*Omega*d3.MulCosine(ones_arr)-d3.div(d3.skew(u_1)))/(h_1+H_1))*second*meter, name='PV_1')
 # snapshots.add_task(0.5*u@u, name='e_kin')
 # snapshots.add_task(0.5*h**2., name='APE')
 
@@ -372,7 +418,7 @@ snapshots.add_task(((2*Omega*d3.MulCosine(ones_arr)-d3.div(d3.skew(u)))/(h+H))*s
 # CFL
 CFL = d3.CFL(solver, initial_dt=max_timestep, cadence=10, safety=0.2, threshold=0.1,
              max_change=1.5, min_change=0.5, max_dt=max_timestep)
-CFL.add_velocity(u)
+CFL.add_velocity(u_1)
 
 # Main loop
 try:
@@ -381,8 +427,10 @@ try:
         timestep = CFL.compute_timestep()
         # Set vorticity forcing field from normalized Gaussian random field rescaled by forcing rate, including factor for 1/2 in kinetic energy
         # epsilon * kf**2 = enstrophy injection rate
-        Fh.change_scales(1.)
-        Fh["g"], storm_count, storm_time, storm_lat, storm_lon = vortex_forcing(solver.sim_time/second, H, storm_count, storm_time, storm_lat, storm_lon, storm_length_dim, storm_interval_dim)
+        Fh_1.change_scales(1.)
+        Fh_2.change_scales(1.)
+
+        Fh_1["g"], Fh_2['g'], storm_count, storm_time, storm_lat, storm_lon = vortex_forcing(solver.sim_time/second, H_1, storm_count, storm_time, storm_lat, storm_lon, storm_length_dim, storm_interval_dim)
 
         solver.step(timestep)
         if (solver.iteration-1) % 10 == 0:
