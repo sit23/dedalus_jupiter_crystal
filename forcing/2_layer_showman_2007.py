@@ -45,8 +45,8 @@ max_timestep = 5e-3
 dtype = np.float64
 
 # Length of simulation (days)
-stop_sim_time = 2.0
-printout = 0.1
+stop_sim_time = 15.0
+printout = 1.0
  
 # Planetary Configurations
 R = 7.14e7 * meter           
@@ -55,10 +55,10 @@ nu = 1e16 * meter**4 / second #used to be about 1e-11, now 1e-25 (dimensions wer
 g = 24.79 * meter / second**2
 
 phi0_1 = 6e4 *meter**2./second**2.
-phi0_2 = 9e5 *meter**2./second**2.
+phi0_2 = 8.4e5 *meter**2./second**2.
 
-rho_1 = 1.
-rho_2 = 2.
+rho_1 = 1.0
+rho_2 = 20./19. #this is so that rho_1/rho_2 = 0.95, as in O'Neil et al 2016.
 g_red = g*(rho_2-rho_1)/rho_1
 
 #parameter for radiative damping
@@ -67,10 +67,10 @@ inv_tau_rad = 0.0 #have made it the inverse of tau_rad so that tau_rad = infinit
 #forcing parameters
 
 showman_s0 = 0.333 #m^2/s^3
-storm_interval_dim = 1.e5 #seconds  
+storm_interval_dim = 1.25e4 #seconds  
 storm_length_dim = 100000.0   #seconds
 
-h_width = 2.1 #degrees
+h_width = 0.7 #degrees
 
 ld_1_at_45N = (np.sqrt(phi0_1)/(2.*Omega*np.sin(np.deg2rad(45.))))/meter
 ld_2_at_45N = (np.sqrt(phi0_2)/(2.*Omega*np.sin(np.deg2rad(45.))))/meter
@@ -81,7 +81,7 @@ showman_s0_nondim = showman_s0*meter**2./second**3
 showman_s0_nondim_height_units = showman_s0_nondim/g
 
 
-exp_name = '2_layer_showman_2007_A1_A5_mk1'
+exp_name = '2_layer_showman_2007_A1_A5_mk2'
 output_folder = f'snapshots/{exp_name}'
 
 params_to_store = ['meter', 'second', 'Nphi', 'Ntheta', 'dealias', 'max_timestep', 'stop_sim_time', 'printout', 'R', 'Omega', 'nu', 'g', 'inv_tau_rad', 'showman_s0', 'storm_interval_dim', 'storm_length_dim', 'h_width', 'exp_name', 'output_folder', 'phi0_1', 'phi0_2', 'rho_1', 'rho_2', 'g_red', 'ld_1_at_45N', 'ld_2_at_45N']
