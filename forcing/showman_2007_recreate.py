@@ -45,14 +45,16 @@ max_timestep = 5e-3
 dtype = np.float64
 
 # Length of simulation (days)
-stop_sim_time = 10.0
-printout = 1.0
+stop_sim_time = 5000.0
+printout = 100.0
  
 # Planetary Configurations
 R = 7.14e7 * meter           
 Omega = 1.74e-4 / second            
-nu = 1e18 * meter**4 / second #used to be about 1e-11, now 1e-25 (dimensions were wrong)
+nu = 1e16 * meter**4 / second #used to be about 1e-11, now 1e-25 (dimensions were wrong)
 g = 24.79 * meter / second**2
+
+phi0 = 6e4 *meter**2./second**2.
 
 #parameter for radiative damping
 inv_tau_rad = 0.0 #have made it the inverse of tau_rad so that tau_rad = infinity is easily done by setting inv_tau_rad = 0.0
@@ -71,20 +73,21 @@ showman_s0_nondim = showman_s0*meter**2./second**3
 showman_s0_nondim_height_units = showman_s0_nondim/g
 
 
-exp_name = 'showman_2007_A1_mk6'
+exp_name = 'showman_2007_A1_mk10'
 output_folder = f'snapshots/{exp_name}'
 
-params_to_store = ['meter', 'second', 'Nphi', 'Ntheta', 'dealias', 'max_timestep', 'stop_sim_time', 'printout', 'R', 'Omega', 'nu', 'g', 'inv_tau_rad', 'showman_s0', 'storm_interval_dim', 'storm_length_dim', 'h_width', 'exp_name', 'output_folder']
+params_to_store = ['meter', 'second', 'Nphi', 'Ntheta', 'dealias', 'max_timestep', 'stop_sim_time', 'printout', 'R', 'Omega', 'nu', 'g', 'inv_tau_rad', 'showman_s0', 'storm_interval_dim', 'storm_length_dim', 'h_width', 'exp_name', 'output_folder', 'phi0']
 
 all_locals = locals()
     # Selectively create a dictionary of variables you are interested in
 params = {key: all_locals[key] for key in all_locals if key in params_to_store}
 
-if not os.path.isdir(output_folder):
-    os.mkdir(output_folder)
-# Write dictionary to a file in JSON format
-with open(f'{output_folder}/sim_variables.json', 'w') as f:
-    json.dump(params, f, indent=4)
+if rank==0:
+    if not os.path.isdir(output_folder):
+        os.mkdir(output_folder)
+    # Write dictionary to a file in JSON format
+    with open(f'{output_folder}/sim_variables.json', 'w') as f:
+        json.dump(params, f, indent=4)
 
 #-----------------------------------------------------------------------------------------------------------------
 
@@ -158,8 +161,6 @@ rm_ang_rad = rm /R
 
 # Calculate deformation radius with Burger number
 # phi0 = Ro*4.*(((Omega*R))**2.) 
-
-phi0 = 6e4 *meter**2./second**2.
 
 H = phi0/g
 phi = g * (h + H) 
@@ -350,18 +351,18 @@ solver.stop_sim_time = stop_sim_time
 #-----------
 
 # Set up and save snapshots
-output_command = f'mpiexec -n 4 python3 plot_sphere_phys_forcing.py {output_folder}/*.h5 --output=./frames/{exp_name}'
+# output_command = f'mpiexec -n 4 python3 plot_sphere_phys_forcing.py {output_folder}/*.h5 --output=./frames/{exp_name}'
 # Analysis
 snapshots = solver.evaluator.add_file_handler(output_folder, sim_dt=printout, max_writes=10)
 
 # add potential vorticity field
 # snapshots.add_task((-d3.div(d3.skew(u)) + 2*Omega*coscolat) / phi, name='PV')
-snapshots.add_task(h, name='height')
-snapshots.add_task(h+H, name='total_height')
-snapshots.add_task(-d3.div(d3.skew(u)), name='vorticity')
-snapshots.add_task(Fh, name='height_forcing')
-snapshots.add_task(u, name='u')
-snapshots.add_task((2*Omega*d3.MulCosine(ones_arr)-d3.div(d3.skew(u)))/(h+H), name='PV')
+snapshots.add_task(h/meter, name='height')
+snapshots.add_task((h+H)/meter, name='total_height')
+snapshots.add_task(-d3.div(d3.skew(u))*second, name='vorticity')
+snapshots.add_task(Fh*second/meter, name='height_forcing')
+snapshots.add_task(u*second/meter, name='u')
+snapshots.add_task(((2*Omega*d3.MulCosine(ones_arr)-d3.div(d3.skew(u)))/(h+H))*second*meter, name='PV')
 # snapshots.add_task(0.5*u@u, name='e_kin')
 # snapshots.add_task(0.5*h**2., name='APE')
 
@@ -387,7 +388,7 @@ try:
         if (solver.iteration-1) % 10 == 0:
             logger.info('Iteration=%i, Time=%e, dt=%e' %(solver.iteration, solver.sim_time, timestep))
     if rank==0:
-        print(f'Please now run the following code for output processing - {output_command}')
+        # print(f'Please now run the following code for output processing - {output_command}')
         dedxar.convert_to_netcdf(exp_name, force_recalculate=True)
 
 except:
