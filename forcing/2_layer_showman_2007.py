@@ -45,7 +45,7 @@ max_timestep = 5e-3
 dtype = np.float64
 
 # Length of simulation (days)
-stop_sim_time = 15.0
+stop_sim_time = 150.0
 printout = 1.0
  
 # Planetary Configurations
@@ -55,7 +55,7 @@ nu = 1e16 * meter**4 / second #used to be about 1e-11, now 1e-25 (dimensions wer
 g = 24.79 * meter / second**2
 
 phi0_1 = 6e4 *meter**2./second**2.
-phi0_2 = 8.4e5 *meter**2./second**2.
+phi0_2 = 6e4 *meter**2./second**2.
 
 rho_1 = 1.0
 rho_2 = 20./19. #this is so that rho_1/rho_2 = 0.95, as in O'Neil et al 2016.
@@ -81,7 +81,7 @@ showman_s0_nondim = showman_s0*meter**2./second**3
 showman_s0_nondim_height_units = showman_s0_nondim/g
 
 
-exp_name = '2_layer_showman_2007_A1_A5_mk2'
+exp_name = '2_layer_showman_2007_A1_A5_mk3'
 output_folder = f'snapshots/{exp_name}'
 
 params_to_store = ['meter', 'second', 'Nphi', 'Ntheta', 'dealias', 'max_timestep', 'stop_sim_time', 'printout', 'R', 'Omega', 'nu', 'g', 'inv_tau_rad', 'showman_s0', 'storm_interval_dim', 'storm_length_dim', 'h_width', 'exp_name', 'output_folder', 'phi0_1', 'phi0_2', 'rho_1', 'rho_2', 'g_red', 'ld_1_at_45N', 'ld_2_at_45N']
