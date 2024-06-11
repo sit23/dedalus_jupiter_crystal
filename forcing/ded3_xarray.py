@@ -48,6 +48,11 @@ def convert_to_netcdf(exp_name, force_recalculate=False):
             dataset['ucomp'] = (dataset['u'][...,0].dims, dataset['u'][...,0].values)
             dataset['vcomp'] = (dataset['u'][...,1].dims, (-dataset['u'][...,1]).values)        
 
+        for layer in [1,2]:
+            if f'u_{layer}' in var_list:
+                dataset[f'ucomp_{layer}'] = (dataset[f'u_{layer}'][...,0].dims, dataset[f'u_{layer}'][...,0].values)
+                dataset[f'vcomp_{layer}'] = (dataset[f'u_{layer}'][...,1].dims, (-dataset[f'u_{layer}'][...,1]).values)   
+
         print('writing output')
         dataset.to_netcdf(nc_name)
     else:

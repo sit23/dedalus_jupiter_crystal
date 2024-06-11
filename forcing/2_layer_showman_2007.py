@@ -37,25 +37,25 @@ hour = day / 24
 second = hour / 3600
 
 # Numerical Parameters
-Nphi = 512
-Ntheta = 256
+Nphi = 512*3
+Ntheta = 768
 dealias = 3/2                   
 timestepper = d3.RK222
 max_timestep = 5e-3
 dtype = np.float64
 
 # Length of simulation (days)
-stop_sim_time = 150.0
-printout = 1.0
+stop_sim_time = 5000.0
+printout = 10.0
  
 # Planetary Configurations
 R = 7.14e7 * meter           
 Omega = 1.74e-4 / second            
-nu = 1e16 * meter**4 / second #used to be about 1e-11, now 1e-25 (dimensions were wrong)
+nu = 1e14 * meter**4 / second #used to be about 1e-11, now 1e-25 (dimensions were wrong)
 g = 24.79 * meter / second**2
 
 phi0_1 = 6e4 *meter**2./second**2.
-phi0_2 = 6e4 *meter**2./second**2.
+phi0_2 = 8.4e5 *meter**2./second**2.
 
 rho_1 = 1.0
 rho_2 = 20./19. #this is so that rho_1/rho_2 = 0.95, as in O'Neil et al 2016.
@@ -75,16 +75,17 @@ h_width = 0.7 #degrees
 ld_1_at_45N = (np.sqrt(phi0_1)/(2.*Omega*np.sin(np.deg2rad(45.))))/meter
 ld_2_at_45N = (np.sqrt(phi0_2)/(2.*Omega*np.sin(np.deg2rad(45.))))/meter
 
-couple_layers = False
+couple_layers = True
 
 showman_s0_nondim = showman_s0*meter**2./second**3
 showman_s0_nondim_height_units = showman_s0_nondim/g
 
+seed = 0
 
-exp_name = '2_layer_showman_2007_A1_A5_mk3'
+exp_name = '2_layer_showman_2007_A1_A5_coupled_mk5'
 output_folder = f'snapshots/{exp_name}'
 
-params_to_store = ['meter', 'second', 'Nphi', 'Ntheta', 'dealias', 'max_timestep', 'stop_sim_time', 'printout', 'R', 'Omega', 'nu', 'g', 'inv_tau_rad', 'showman_s0', 'storm_interval_dim', 'storm_length_dim', 'h_width', 'exp_name', 'output_folder', 'phi0_1', 'phi0_2', 'rho_1', 'rho_2', 'g_red', 'ld_1_at_45N', 'ld_2_at_45N']
+params_to_store = ['meter', 'second', 'Nphi', 'Ntheta', 'dealias', 'max_timestep', 'stop_sim_time', 'printout', 'R', 'Omega', 'nu', 'g', 'inv_tau_rad', 'showman_s0', 'storm_interval_dim', 'storm_length_dim', 'h_width', 'exp_name', 'output_folder', 'phi0_1', 'phi0_2', 'rho_1', 'rho_2', 'g_red', 'ld_1_at_45N', 'ld_2_at_45N', 'seed']
 
 all_locals = locals()
     # Selectively create a dictionary of variables you are interested in
@@ -101,6 +102,7 @@ if rank==0:
 
 # Dedalus set ups
 #-----------------
+np.random.seed(seed)
 
 # Bases
 coords = d3.S2Coordinates('phi', 'theta')
@@ -400,6 +402,9 @@ snapshots.add_task((h_2+H_2)/meter, name='total_height_2')
 
 snapshots.add_task(-d3.div(d3.skew(u_1))*second, name='vorticity_1')
 snapshots.add_task(-d3.div(d3.skew(u_2))*second, name='vorticity_2')
+
+snapshots.add_task(d3.div(u_1)*second, name='div_1')
+snapshots.add_task(d3.div(u_2)*second, name='div_2')
 
 snapshots.add_task(Fh_1*second/meter, name='height_forcing_1')
 snapshots.add_task(Fh_2*second/meter, name='height_forcing_2')

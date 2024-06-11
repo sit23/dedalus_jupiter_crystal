@@ -37,8 +37,8 @@ hour = day / 24
 second = hour / 3600
 
 # Numerical Parameters
-Nphi = 512
-Ntheta = 256
+Nphi = 768
+Ntheta = 384
 dealias = 3/2                   
 timestepper = d3.RK222
 max_timestep = 5e-3
@@ -46,7 +46,7 @@ dtype = np.float64
 
 # Length of simulation (days)
 stop_sim_time = 5000.0
-printout = 100.0
+printout = 10.0
  
 # Planetary Configurations
 R = 7.14e7 * meter           
@@ -62,21 +62,23 @@ inv_tau_rad = 0.0 #have made it the inverse of tau_rad so that tau_rad = infinit
 #forcing parameters
 
 showman_s0 = 0.333 #m^2/s^3
-storm_interval_dim = 1.25e4 #seconds  
+storm_interval_dim = 2e3 #seconds  
 storm_length_dim = 100000.0   #seconds
 
 h_width = 0.7 #degrees
 
+seed = 0
 
+max_storm_number = 61
 
 showman_s0_nondim = showman_s0*meter**2./second**3
 showman_s0_nondim_height_units = showman_s0_nondim/g
 
 
-exp_name = 'showman_2007_A1_mk10'
+exp_name = 'showman_2007_A1_mk16'
 output_folder = f'snapshots/{exp_name}'
 
-params_to_store = ['meter', 'second', 'Nphi', 'Ntheta', 'dealias', 'max_timestep', 'stop_sim_time', 'printout', 'R', 'Omega', 'nu', 'g', 'inv_tau_rad', 'showman_s0', 'storm_interval_dim', 'storm_length_dim', 'h_width', 'exp_name', 'output_folder', 'phi0']
+params_to_store = ['meter', 'second', 'Nphi', 'Ntheta', 'dealias', 'max_timestep', 'stop_sim_time', 'printout', 'R', 'Omega', 'nu', 'g', 'inv_tau_rad', 'showman_s0', 'storm_interval_dim', 'storm_length_dim', 'h_width', 'exp_name', 'output_folder', 'phi0', 'seed', 'max_storm_number']
 
 all_locals = locals()
     # Selectively create a dictionary of variables you are interested in
@@ -93,6 +95,7 @@ if rank==0:
 
 # Dedalus set ups
 #-----------------
+np.random.seed(seed)
 
 # Bases
 coords = d3.S2Coordinates('phi', 'theta')
@@ -126,9 +129,9 @@ lon = lon + 0.*theta
 Fh = dist.Field(name="Fh", bases=basis)
 
 # Initialize arrays for storm times, latitudes, and longitudes
-storm_time = np.zeros(31)
-storm_lat = np.zeros(31)
-storm_lon = np.zeros(31)
+storm_time = np.zeros(max_storm_number)
+storm_lat = np.zeros(max_storm_number)
+storm_lon = np.zeros(max_storm_number)
 storm_count = 0
 
 # Set up basic operators
@@ -267,7 +270,7 @@ def vortex_forcing(model_time, H, storm_count, storm_time, storm_lat, storm_lon,
         elif (model_time - (storm_time[storm_count]-storm_length/2.)) >= storm_interval:
 
             # Update storm count
-            storm_count = (storm_count + 1) % 31
+            storm_count = (storm_count + 1) % max_storm_number
 
             # Set up future storm time
             if storm_count == 0:
@@ -289,7 +292,7 @@ def vortex_forcing(model_time, H, storm_count, storm_time, storm_lat, storm_lon,
         print(f"MPI Exception: {e}")
 
     # Loop through potential storm times to apply effects
-    for storm_count_i in range(31):
+    for storm_count_i in range(max_storm_number):
         time_delta = model_time - storm_time[storm_count_i]
         storm_active = -storm_length / 2 <= time_delta <= storm_length / 2
         if storm_active and storm_time[storm_count_i] != 0:
@@ -381,8 +384,8 @@ try:
         timestep = CFL.compute_timestep()
         # Set vorticity forcing field from normalized Gaussian random field rescaled by forcing rate, including factor for 1/2 in kinetic energy
         # epsilon * kf**2 = enstrophy injection rate
-        Fh.change_scales(1.)
-        Fh["g"], storm_count, storm_time, storm_lat, storm_lon = vortex_forcing(solver.sim_time/second, H, storm_count, storm_time, storm_lat, storm_lon, storm_length_dim, storm_interval_dim)
+        # Fh.change_scales(1.)
+        # Fh["g"], storm_count, storm_time, storm_lat, storm_lon = vortex_forcing(solver.sim_time/second, H, storm_count, storm_time, storm_lat, storm_lon, storm_length_dim, storm_interval_dim)
 
         solver.step(timestep)
         if (solver.iteration-1) % 10 == 0:
