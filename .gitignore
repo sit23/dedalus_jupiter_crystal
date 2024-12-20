@@ -2,3 +2,6 @@
 *.png
 *.nc
 *.mp4
+._*
+*DS_Store
+*__pycache__
