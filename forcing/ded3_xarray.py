@@ -29,12 +29,14 @@ def convert_to_netcdf(exp_name, force_recalculate=False):
         print('concatanating')
         dataset = xar.combine_by_coords(dataset_list)
 
-        deg_lat = np.rad2deg(np.pi / 2 - dataset['theta'])
-        deg_lon = np.rad2deg(dataset['phi'])
+        if 'theta' in dataset.dims:
 
-        dataset = dataset.rename({'theta':'lat', 'phi':'lon'})
-        dataset['lat'] = ('lat', deg_lat.values)
-        dataset['lon'] = ('lon', deg_lon.values)
+            deg_lat = np.rad2deg(np.pi / 2 - dataset['theta'])
+            deg_lon = np.rad2deg(dataset['phi'])
+
+            dataset = dataset.rename({'theta':'lat', 'phi':'lon'})
+            dataset['lat'] = ('lat', deg_lat.values)
+            dataset['lon'] = ('lon', deg_lon.values)
 
         dim_list = [dim for dim in dataset.dims.keys()]
         var_list = [key for key in dataset.keys() if key not in dim_list]
@@ -42,8 +44,11 @@ def convert_to_netcdf(exp_name, force_recalculate=False):
         if '' in dim_list:
             dataset = dataset.rename({'':'comp'})
 
-        dataset = dataset.transpose('t','lat','lon','comp')
-
+        if 'theta' in dataset.dims:
+            dataset = dataset.transpose('t','lat','lon','comp')
+        else:
+            dataset = dataset.transpose('t','y','x','comp')
+            
         if 'u' in var_list:
             dataset['ucomp'] = (dataset['u'][...,0].dims, dataset['u'][...,0].values)
             dataset['vcomp'] = (dataset['u'][...,1].dims, (-dataset['u'][...,1]).values)        

@@ -1,6 +1,6 @@
 """
 
-mpiexec -n 16 python3 intruder.py &&
+mpiexec -n 16 python3 intruder_moist_shallow_water.py &&
 mpiexec -n 16 python3 plot_intruder.py ./snapshots/intruder_forced_1_snapshots/*.h5 --output ./frames/intruder_frames &&
 ffmpeg -r 120 -i ./reproduce/intruder/intruder_frames/write_%06d.png ./reproduce/intruder/intruder_h1e-8.mp4
 
@@ -14,10 +14,17 @@ Stitching two mp4s together:
 import numpy as np
 import dedalus.public as d3
 import logging
+import ded3_xarray as dedxar
+from mpi4py import MPI
 logger = logging.getLogger(__name__)
 
 import pdb
 
+exp_name = 'moist_shallow_intruder_2'
+# Initialize MPI
+comm = MPI.COMM_WORLD
+rank = comm.Get_rank()  # Get the rank of the current process
+num_cores = comm.Get_size()
 
 # Parameters
 #------------
@@ -45,13 +52,14 @@ R = 71.4e6 * meter
 Omega = 1.74e-4 / second            
 nu = 1e2 * meter**2 / second / 32**2 
 g = 24.79 * meter / second**2
+H = 5e4 * meter 
 
-# energy injected at rate epsilon on a Gaussian ring N(kf, kfw) 
-epsilon = 0.001     
-kf = 2 * 14 * 2*np.pi/Lx
-kfw = 1.5 * 2*np.pi/Lx
-seed = None     
-
+q_0 = 1e-5
+alpha = 20.0
+tau = 10.0
+q_ground = 1e-5
+Uz = 1.0
+lambda_val = 1.0
 
 #-----------------------------------------------------------------------------------------------------------------
 
@@ -67,6 +75,9 @@ ybasis = d3.RealFourier(coords['y'], size=Nz, bounds=(-Lz/2, Lz/2), dealias=deal
 # Fields both functions of x,y
 h = dist.Field(name='h', bases=(xbasis,ybasis))
 u = dist.VectorField(coords, name='u', bases=(xbasis,ybasis))
+q = dist.Field(name='q', bases=(xbasis,ybasis)) #specific humidity variable
+evap = dist.Field(name='evap', bases=(xbasis,ybasis))
+cond = dist.Field(name='cond', bases=(xbasis,ybasis))
 
 # Substitutions
 x, y = dist.local_grids(xbasis, ybasis)
@@ -74,9 +85,19 @@ ex, ey = coords.unit_vector_fields(dist)
 
 # Set up basic operators
 zcross = lambda A: d3.skew(A)
+# heavi = lambda A: np.heaviside(A, 1.0)
+
+# Custom function acting on grid data
+def heavi(x):
+    out = np.heaviside(x, 1.0)
+    return out
+
+q_sat = lambda A: q_0*np.exp(-alpha*A/H)
 
 coscolat = dist.Field(name='coscolat', bases=(xbasis, ybasis))
 coscolat['g'] = np.cos(np.sqrt((x)**2. + (y)**2) / R)
+
+lambda_over_U0 = lambda_val*(1./Uz)
 
 #-----------------------------------------------------------------------------------------------------------------
 
@@ -101,7 +122,7 @@ rm = 1e6 * meter                                     # Radius of vortex (km)
 vm = Ro * f0 * rm                                    # Calculate speed with Ro
 
 # Calculate deformation radius with Burger number
-H = 5e4 * meter 
+
 phi = g * (h + H) 
 
 # Calculate Burger Number -- Currently Bu ~ 10
@@ -153,7 +174,7 @@ solver.solve()
 h['g'] += ( np.random.rand(h['g'].shape[0], h['g'].shape[1]) - 0.5 ) * 1e-8
 
 
-
+q['g'] = q_sat(h['g'])
 
 #-----------------------------------------------------------------------------------------------------------------
 
@@ -161,9 +182,12 @@ h['g'] += ( np.random.rand(h['g'].shape[0], h['g'].shape[1]) - 0.5 ) * 1e-8
 #--------------------
 
 # Problem
-problem = d3.IVP([u, h], namespace=locals())
+problem = d3.IVP([u, h, q], namespace=locals())
 problem.add_equation("dt(u) + nu*lap(lap(u)) + g*grad(h)  = - u@grad(u) - 2*Omega*coscolat*zcross(u)")
 problem.add_equation("dt(h) + nu*lap(lap(h)) + H*div(u) = - div(h*u)")
+problem.add_equation("dt(q) + nu*lap(lap(q)) = - div(q*u) + evap - cond")
+problem.add_equation("evap = (lambda_over_U0)*((u@u)**(0.5))*(q_ground - q)*heavi(q_ground - q)")
+problem.add_equation("cond = heavi(q-q_sat(h))*(q - q_sat(h))/(tau)")
 solver = problem.build_solver(timestepper)
 solver.stop_sim_time = stop_sim_time 
 
@@ -172,13 +196,17 @@ solver.stop_sim_time = stop_sim_time
 #-----------
 
 # Set up and save snapshots
-snapshots = solver.evaluator.add_file_handler('snapshots/intruder_unforced_2_2025_snapshots/', sim_dt=printout, max_writes=10)
+output_folder = f'snapshots/{exp_name}'
+output_command = f'mpiexec -n 4 python3 plot_intruder.py {output_folder}/*.h5 --output=./frames/{exp_name}'
+# Analysis
+snapshots = solver.evaluator.add_file_handler(output_folder, sim_dt=printout, max_writes=10)
 
 # add potential vorticity field
 snapshots.add_task(h/meter, name='height')
 snapshots.add_task((h+H)/meter, name='total_height')
 snapshots.add_task(-d3.div(d3.skew(u))*second, name='vorticity')
 snapshots.add_task(u*second/meter, name='u')
+snapshots.add_task(q, name='q')
 # snapshots.add_task(((2*Omega*d3.MulCosine(ones_arr)-d3.div(d3.skew(u)))/(h+H))*second*meter, name='PV')
 
 
@@ -201,16 +229,16 @@ try:
     while solver.proceed:
         timestep = CFL.compute_timestep()
 
-        # Set vorticity forcing field from normalized Gaussian random field rescaled by forcing rate, including factor for 1/2 in kinetic energy
-        # epsilon * kf**2 = enstrophy injection rate
-        # Fw["c"] = 1e-5*np.sqrt(2 * (epsilon * kf**2) / timestep) * gaussian_random_field(kf, kfw, rand, kx, ky, dkx, dky)
-
         solver.step(timestep)
         if (solver.iteration-1) % 10 == 0:
             max_w = np.sqrt(flow.max('w2'))
             logger.info('Iteration=%i, Time=%e, dt=%e, max(w)=%f' %(solver.iteration, solver.sim_time, timestep, max_w))
+    if rank==0:
+        print(f'Please now run the following code for output processing - {output_command}')
+        dedxar.convert_to_netcdf(exp_name, force_recalculate=True)
 except:
     logger.error('Exception raised, triggering end of main loop.')
     raise
 finally:
     solver.log_stats()
+    
