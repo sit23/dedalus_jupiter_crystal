@@ -89,7 +89,7 @@ zcross = lambda A: d3.skew(A)
 
 # Custom function acting on grid data
 def heavi(x):
-    out = np.heaviside(x, 1.0)
+    out = 0.5*(1.+np.tanh(x))#np.heaviside(x, 1.0)
     return out
 
 q_sat = lambda A: q_0*np.exp(-alpha*A/H)
@@ -185,9 +185,9 @@ q['g'] = q_sat(h['g'])
 problem = d3.IVP([u, h, q], namespace=locals())
 problem.add_equation("dt(u) + nu*lap(lap(u)) + g*grad(h)  = - u@grad(u) - 2*Omega*coscolat*zcross(u)")
 problem.add_equation("dt(h) + nu*lap(lap(h)) + H*div(u) = - div(h*u)")
-problem.add_equation("dt(q) + nu*lap(lap(q)) = - div(q*u) + evap - cond")
-problem.add_equation("evap = (lambda_over_U0)*((u@u)**(0.5))*(q_ground - q)*heavi(q_ground - q)")
-problem.add_equation("cond = heavi(q-q_sat(h))*(q - q_sat(h))/(tau)")
+problem.add_equation("dt(q) + nu*lap(lap(q)) = - div(q*u) + (lambda_over_U0)*((u@u)**(0.5))*(q_ground - q)*heavi(q_ground - q) - heavi(q-q_sat(h))*(q - q_sat(h))/(tau)")
+# problem.add_equation("0 = -evap + (lambda_over_U0)*((u@u)**(0.5))*(q_ground - q)*heavi(q_ground - q)")
+# problem.add_equation("0 = -cond + heavi(q-q_sat(h))*(q - q_sat(h))/(tau)")
 solver = problem.build_solver(timestepper)
 solver.stop_sim_time = stop_sim_time 
 
